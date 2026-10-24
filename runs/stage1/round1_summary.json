@@ -1,0 +1,131 @@
+[
+  {
+    "name": "round1_trial1",
+    "seed": 42,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.0,
+    "rotate": 15,
+    "color_jitter": 0.08,
+    "best_val_accuracy": 1.0,
+    "test_accuracy_of_best_checkpoint": 1.0,
+    "test_confusion": [
+      [
+        20,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        20,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        20,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        20
+      ]
+    ],
+    "classes": [
+      "cuboid",
+      "tetrahedron",
+      "prism",
+      "sphere"
+    ]
+  },
+  {
+    "name": "round1_trial3",
+    "seed": 44,
+    "lr": 0.001,
+    "weight_decay": 0.0005,
+    "label_smoothing": 0.0,
+    "rotate": 8,
+    "color_jitter": 0.05,
+    "best_val_accuracy": 1.0,
+    "test_accuracy_of_best_checkpoint": 1.0,
+    "test_confusion": [
+      [
+        20,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        20,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        20,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        20
+      ]
+    ],
+    "classes": [
+      "cuboid",
+      "tetrahedron",
+      "prism",
+      "sphere"
+    ]
+  },
+  {
+    "name": "round1_trial2",
+    "seed": 43,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.02,
+    "rotate": 25,
+    "color_jitter": 0.12,
+    "best_val_accuracy": 0.9875,
+    "test_accuracy_of_best_checkpoint": 0.95,
+    "test_confusion": [
+      [
+        20,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        20,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        19,
+        0
+      ],
+      [
+        0,
+        0,
+        3,
+        17
+      ]
+    ],
+    "classes": [
+      "cuboid",
+      "tetrahedron",
+      "prism",
+      "sphere"
+    ]
+  }
+]

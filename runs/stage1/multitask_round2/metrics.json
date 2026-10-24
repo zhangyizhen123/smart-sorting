@@ -1,0 +1,22 @@
+{
+  "best_val_joint": 1.0,
+  "best_val_shape": 1.0,
+  "best_val_color": 1.0,
+  "test": {
+    "shape_accuracy": 0.9947916666666666,
+    "color_accuracy": 1.0,
+    "joint_accuracy": 0.9947916666666666
+  },
+  "shapes": [
+    "cuboid",
+    "tetrahedron",
+    "prism",
+    "sphere"
+  ],
+  "colors": [
+    "red",
+    "green",
+    "blue",
+    "yellow"
+  ]
+}

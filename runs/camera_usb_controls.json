@@ -1,0 +1,126 @@
+﻿{
+    "Name":  "USB Camera",
+    "Controls":  [
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "Brightness",
+                         "Min":  -64,
+                         "Max":  64,
+                         "Step":  1,
+                         "Default":  0,
+                         "Capabilities":  2,
+                         "Value":  0,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "Contrast",
+                         "Min":  0,
+                         "Max":  100,
+                         "Step":  1,
+                         "Default":  40,
+                         "Capabilities":  2,
+                         "Value":  40,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "Hue",
+                         "Min":  -180,
+                         "Max":  180,
+                         "Step":  1,
+                         "Default":  0,
+                         "Capabilities":  2,
+                         "Value":  0,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "Saturation",
+                         "Min":  0,
+                         "Max":  100,
+                         "Step":  1,
+                         "Default":  64,
+                         "Capabilities":  2,
+                         "Value":  64,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "Sharpness",
+                         "Min":  0,
+                         "Max":  100,
+                         "Step":  1,
+                         "Default":  50,
+                         "Capabilities":  2,
+                         "Value":  50,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "Gamma",
+                         "Min":  100,
+                         "Max":  500,
+                         "Step":  1,
+                         "Default":  300,
+                         "Capabilities":  2,
+                         "Value":  300,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "WhiteBalance",
+                         "Min":  2800,
+                         "Max":  6500,
+                         "Step":  10,
+                         "Default":  4600,
+                         "Capabilities":  3,
+                         "Value":  4600,
+                         "Flags":  1,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "VideoProcAmp",
+                         "Name":  "BacklightCompensation",
+                         "Min":  0,
+                         "Max":  1,
+                         "Step":  1,
+                         "Default":  0,
+                         "Capabilities":  2,
+                         "Value":  0,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "CameraControl",
+                         "Name":  "Roll",
+                         "Min":  0,
+                         "Max":  3,
+                         "Step":  1,
+                         "Default":  0,
+                         "Capabilities":  2,
+                         "Value":  0,
+                         "Flags":  2,
+                         "ReadStatus":  0
+                     },
+                     {
+                         "Group":  "CameraControl",
+                         "Name":  "Exposure",
+                         "Min":  -14,
+                         "Max":  0,
+                         "Step":  1,
+                         "Default":  -6,
+                         "Capabilities":  3,
+                         "Value":  -6,
+                         "Flags":  1,
+                         "ReadStatus":  0
+                     }
+                 ],
+    "BrightnessTest":  "Original=0; Requested=1; Readback=1; SetStatus=0; ReadStatus=0; RestoreStatus=0; Restored=0; RestoredFlags=2; RestoreReadStatus=0"
+}

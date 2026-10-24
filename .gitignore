@@ -1,0 +1,33 @@
+# ---- 第三方资料与大数据集（约 17 GB，不入库）----
+/reference/
+
+# ---- 合成数据（可由 vision/stage1 脚本复现）----
+/dataset/
+
+# ---- 训练产物：权重、导出模型、日志、可视化 ----
+runs/**/*.pt
+runs/**/*.onnx
+runs/**/*.engine
+runs/**/*.tfevents*
+runs/**/events.out.tfevents.*
+runs/**/weights/
+runs/**/*.jpg
+runs/**/*.png
+
+# ---- 群聊/群文件导出（含第三方个人信息，不公开）----
+群聊记录.txt
+群聊记录.json
+群文件清单.json
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv*/
+venv/
+*.egg-info/
+
+# ---- 工具与系统 ----
+.workbuddy-ai/
+.DS_Store
+Thumbs.db
+*.log

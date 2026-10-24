@@ -1,0 +1,36 @@
+{
+  "best_val_accuracy": 1.0,
+  "test_accuracy_of_best_checkpoint": 1.0,
+  "test_confusion": [
+    [
+      20,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      20,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      20,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      20
+    ]
+  ],
+  "classes": [
+    "cuboid",
+    "tetrahedron",
+    "prism",
+    "sphere"
+  ]
+}

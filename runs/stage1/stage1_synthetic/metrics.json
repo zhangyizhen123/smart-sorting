@@ -1,0 +1,36 @@
+{
+  "best_val_accuracy": 0.9875,
+  "test_accuracy": 0.925,
+  "test_confusion": [
+    [
+      20,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      20,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      19,
+      0
+    ],
+    [
+      2,
+      0,
+      3,
+      15
+    ]
+  ],
+  "classes": [
+    "cuboid",
+    "tetrahedron",
+    "prism",
+    "sphere"
+  ]
+}

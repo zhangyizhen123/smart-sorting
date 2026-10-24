@@ -1,0 +1,272 @@
+[
+  {
+    "file": "cylinder.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      40.0,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -20.0,
+        0.0
+      ],
+      [
+        20.0,
+        20.0,
+        40.0
+      ]
+    ],
+    "triangles": 1020,
+    "vertices": 512,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 50260.43564,
+    "analytical_volume_error_percent": 0.01004,
+    "bytes": 51084
+  },
+  {
+    "file": "cube.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      40.0,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -20.0,
+        0.0
+      ],
+      [
+        20.0,
+        20.0,
+        40.0
+      ]
+    ],
+    "triangles": 12,
+    "vertices": 8,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 64000.0,
+    "analytical_volume_error_percent": 0.0,
+    "bytes": 684
+  },
+  {
+    "file": "cuboid.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      30.0,
+      20.0
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -15.0,
+        0.0
+      ],
+      [
+        20.0,
+        15.0,
+        20.0
+      ]
+    ],
+    "triangles": 12,
+    "vertices": 8,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 24000.0,
+    "analytical_volume_error_percent": 0.0,
+    "bytes": 684
+  },
+  {
+    "file": "tri_prism.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      30.0,
+      34.641018,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -10.0,
+        -17.32050895690918,
+        0.0
+      ],
+      [
+        20.0,
+        17.32050895690918,
+        40.0
+      ]
+    ],
+    "triangles": 8,
+    "vertices": 6,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 20784.610748,
+    "analytical_volume_error_percent": 5e-06,
+    "bytes": 484
+  },
+  {
+    "file": "pent_prism.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      36.18034,
+      38.042259,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -16.180339813232422,
+        -19.021129608154297,
+        0.0
+      ],
+      [
+        20.0,
+        19.021129608154297,
+        40.0
+      ]
+    ],
+    "triangles": 16,
+    "vertices": 10,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 38042.259338,
+    "analytical_volume_error_percent": 3e-06,
+    "bytes": 884
+  },
+  {
+    "file": "hex_prism.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      34.641018,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -17.32050895690918,
+        0.0
+      ],
+      [
+        20.0,
+        17.32050895690918,
+        40.0
+      ]
+    ],
+    "triangles": 20,
+    "vertices": 12,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 41569.221497,
+    "analytical_volume_error_percent": 5e-06,
+    "bytes": 1084
+  },
+  {
+    "file": "cone.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      40.0,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -20.0,
+        0.0
+      ],
+      [
+        20.0,
+        20.0,
+        40.0
+      ]
+    ],
+    "triangles": 510,
+    "vertices": 257,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 16753.478547,
+    "analytical_volume_error_percent": 0.01004,
+    "bytes": 25584
+  },
+  {
+    "file": "tetrahedron.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      34.641017,
+      32.659863
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -11.547005653381348,
+        0.0
+      ],
+      [
+        20.0,
+        23.094011306762695,
+        32.65986251831055
+      ]
+    ],
+    "triangles": 4,
+    "vertices": 4,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 7542.472343,
+    "analytical_volume_error_percent": 0.0,
+    "bytes": 284
+  },
+  {
+    "file": "sphere.stl",
+    "units": "mm",
+    "dimensions_mm": [
+      40.0,
+      40.0,
+      40.0
+    ],
+    "bounds_mm": [
+      [
+        -20.0,
+        -20.0,
+        0.0
+      ],
+      [
+        20.0,
+        20.0,
+        40.0
+      ]
+    ],
+    "triangles": 65024,
+    "vertices": 32514,
+    "watertight": true,
+    "consistent_winding": true,
+    "connected_components": 1,
+    "euler_characteristic": 2,
+    "volume_mm3": 33501.91139,
+    "analytical_volume_error_percent": 0.025097,
+    "bytes": 3251284
+  }
+]

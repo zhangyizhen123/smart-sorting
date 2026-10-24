@@ -1,0 +1,9 @@
+cylinder
+cube
+cuboid
+tri_prism
+pent_prism
+hex_prism
+cone
+tetrahedron
+sphere

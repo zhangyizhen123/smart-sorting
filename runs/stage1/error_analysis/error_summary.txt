@@ -1,0 +1,1 @@
+sphere -> prism (0.497562) ../../dataset/stage1_synthetic/test/sphere/sphere_00012.jpg
