@@ -5,9 +5,17 @@ from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
 
 import torch
 from ultralytics import YOLO
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def project_path(value: str) -> Path:
+    path = Path(value)
+    return (path if path.is_absolute() else ROOT / path).resolve()
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,10 +46,14 @@ def main() -> None:
     cache = False if args.cache == "none" else args.cache
     amp = not args.no_amp and device != "cpu"
     os.environ.setdefault("WANDB_PROJECT", "smart-sort")
+    data = project_path(args.data)
+    project = project_path(args.project)
+    model_path = project_path(args.model)
+    model_name = str(model_path) if model_path.exists() else args.model
 
-    model = YOLO(args.model)
+    model = YOLO(model_name)
     model.train(
-        data=args.data,
+        data=str(data),
         epochs=args.epochs,
         imgsz=args.imgsz,
         batch=args.batch,
@@ -49,7 +61,7 @@ def main() -> None:
         workers=args.workers,
         cache=cache,
         seed=args.seed,
-        project=args.project,
+        project=str(project),
         name=args.name,
         pretrained=True,
         optimizer="AdamW",

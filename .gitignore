@@ -8,6 +8,8 @@
 /dataset/
 
 # ---- 训练产物：权重、导出模型、日志、可视化 ----
+/runs/segment/
+/yolo11n-seg.pt
 runs/**/*.pt
 runs/**/*.onnx
 runs/**/*.engine

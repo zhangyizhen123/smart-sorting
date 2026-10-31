@@ -1,0 +1,90 @@
+{
+  "model": "models\\trained\\stl_shape_v1\\best.pt",
+  "model_sha256": "5c7dd29d84c0b71b3110ca0da0f101210648e85b7e9badded00c2ab09f3b057e",
+  "data": "dataset\\stl_synthetic_yolo\\data.yaml",
+  "dataset_root": "dataset\\stl_synthetic_yolo",
+  "split": "test",
+  "image_count": 108,
+  "instance_count": 273,
+  "imgsz": 320,
+  "device": "cpu",
+  "ultralytics": "8.4.194",
+  "box": {
+    "precision": 0.8268,
+    "recall": 0.9015,
+    "mAP50": 0.9154,
+    "mAP50_95": 0.9104
+  },
+  "mask": {
+    "precision": 0.8268,
+    "recall": 0.9015,
+    "mAP50": 0.9154,
+    "mAP50_95": 0.8716
+  },
+  "per_class": {
+    "cylinder": {
+      "instances": 32,
+      "mask_precision": 0.9723,
+      "mask_recall": 0.9688,
+      "mask_mAP50": 0.9917,
+      "mask_mAP50_95": 0.965
+    },
+    "cube": {
+      "instances": 33,
+      "mask_precision": 0.6782,
+      "mask_recall": 0.9579,
+      "mask_mAP50": 0.8075,
+      "mask_mAP50_95": 0.7683
+    },
+    "cuboid": {
+      "instances": 32,
+      "mask_precision": 0.8055,
+      "mask_recall": 0.518,
+      "mask_mAP50": 0.7614,
+      "mask_mAP50_95": 0.736
+    },
+    "tri_prism": {
+      "instances": 28,
+      "mask_precision": 0.7484,
+      "mask_recall": 0.9643,
+      "mask_mAP50": 0.9311,
+      "mask_mAP50_95": 0.8838
+    },
+    "pent_prism": {
+      "instances": 34,
+      "mask_precision": 0.775,
+      "mask_recall": 0.8529,
+      "mask_mAP50": 0.881,
+      "mask_mAP50_95": 0.8309
+    },
+    "hex_prism": {
+      "instances": 27,
+      "mask_precision": 0.7201,
+      "mask_recall": 0.9259,
+      "mask_mAP50": 0.9187,
+      "mask_mAP50_95": 0.8726
+    },
+    "cone": {
+      "instances": 27,
+      "mask_precision": 0.9048,
+      "mask_recall": 0.9259,
+      "mask_mAP50": 0.9632,
+      "mask_mAP50_95": 0.9122
+    },
+    "tetrahedron": {
+      "instances": 27,
+      "mask_precision": 0.8596,
+      "mask_recall": 1.0,
+      "mask_mAP50": 0.9889,
+      "mask_mAP50_95": 0.9283
+    },
+    "sphere": {
+      "instances": 33,
+      "mask_precision": 0.9774,
+      "mask_recall": 1.0,
+      "mask_mAP50": 0.995,
+      "mask_mAP50_95": 0.9471
+    }
+  },
+  "prediction_dir": "runs\\segment\\stl_shape_v1_test_verified_predictions"
+}
