@@ -1,0 +1,17 @@
+{
+  "source": "measure all ten physical colours from the locked MaixCAM2 camera and final lighting",
+  "max_distance": 24.0,
+  "min_margin": 3.0,
+  "lab_prototypes": {
+    "white": [0.0, 0.0, 0.0],
+    "qing": [0.0, 0.0, 0.0],
+    "skyblue": [0.0, 0.0, 0.0],
+    "yellow": [0.0, 0.0, 0.0],
+    "red": [0.0, 0.0, 0.0],
+    "gray": [0.0, 0.0, 0.0],
+    "green": [0.0, 0.0, 0.0],
+    "purple": [0.0, 0.0, 0.0],
+    "black": [0.0, 0.0, 0.0],
+    "orange": [0.0, 0.0, 0.0]
+  }
+}

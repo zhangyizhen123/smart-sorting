@@ -1,6 +1,9 @@
 # ---- 第三方资料与大数据集（约 17 GB，不入库）----
 /reference/
 
+# ---- 第三方仓库压缩包（超过 GitHub 单文件限制）----
+**/yolov5-7.0.zip
+
 # ---- 合成数据（可由 vision/stage1 脚本复现）----
 /dataset/
 
@@ -15,9 +18,9 @@ runs/**/*.jpg
 runs/**/*.png
 
 # ---- 群聊/群文件导出（含第三方个人信息，不公开）----
-群聊记录.txt
-群聊记录.json
-群文件清单.json
+reference/群聊资料/群聊记录.txt
+reference/群聊资料/群聊记录.json
+reference/群聊资料/群文件清单.json
 
 # ---- Python ----
 __pycache__/
@@ -31,3 +34,4 @@ venv/
 .DS_Store
 Thumbs.db
 *.log
+**/~$*

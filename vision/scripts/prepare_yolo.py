@@ -5,9 +5,9 @@ Expected source layout:
   raw/images/**/*.jpg
   raw/labels/**/*.txt
 
-For paired cameras, both images must share the same group id. By default the
-part before the first ``__`` in the filename is used as the group id, e.g.
-``piece042__top__frame003.jpg`` and ``piece042__oblique__frame003.jpg``.
+Images from the same tray arrangement must share the same group id. By default
+the part before the first ``__`` in the filename is used, e.g.
+``scene042__frame003.jpg`` and ``scene042__frame004.jpg``.
 """
 
 from __future__ import annotations

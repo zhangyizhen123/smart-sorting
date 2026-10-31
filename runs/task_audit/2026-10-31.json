@@ -1,0 +1,77 @@
+{
+  "audit_date": "2026-10-31",
+  "scope": "desktop tests only; no hardware validation",
+  "checks": [
+    {
+      "name": "python_runtime",
+      "command": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "vision/tests",
+        "-v"
+      ],
+      "returncode": 0,
+      "output": "test_first_stable_classes_get_first_detection_order (test_runtime.AssignmentTests.test_first_stable_classes_get_first_detection_order) ... ok\ntest_session_falls_back_when_failed_class_is_no_longer_visible (test_runtime.AssignmentTests.test_session_falls_back_when_failed_class_is_no_longer_visible) ... ok\ntest_session_rescans_after_drop_failure_and_counts_only_success (test_runtime.AssignmentTests.test_session_rescans_after_drop_failure_and_counts_only_success) ... ok\ntest_temporal_consensus_requires_three_stable_frames (test_runtime.AssignmentTests.test_temporal_consensus_requires_three_stable_frames) ... ok\ntest_maps_oblique_image_corners_to_tray_plane (test_runtime.CalibrationTests.test_maps_oblique_image_corners_to_tray_plane) ... ok\ntest_rejects_degenerate_calibration (test_runtime.CalibrationTests.test_rejects_degenerate_calibration) ... ok\ntest_lab_conversion_and_classifier_abstention (test_runtime.ColorTests.test_lab_conversion_and_classifier_abstention) ... ok\ntest_stabilizes_maps_six_classes_and_waits_for_controller_ready (test_runtime.PipelineTests.test_stabilizes_maps_six_classes_and_waits_for_controller_ready) ... ok\ntest_crc_known_vector_and_round_trip (test_runtime.ProtocolTests.test_crc_known_vector_and_round_trip) ... ok\ntest_decodes_status_payload_and_sequence (test_runtime.ProtocolTests.test_decodes_status_payload_and_sequence) ... ok\ntest_rejects_bad_crc_and_length (test_runtime.ProtocolTests.test_rejects_bad_crc_and_length) ... ok\ntest_rejects_unsupported_version (test_runtime.ProtocolTests.test_rejects_unsupported_version) ... ok\ntest_stream_decoder_handles_fragmentation_and_noise (test_runtime.ProtocolTests.test_stream_decoder_handles_fragmentation_and_noise) ... ok\n\n----------------------------------------------------------------------\nRan 13 tests in 0.003s\n\nOK\n"
+    },
+    {
+      "name": "python_compile",
+      "command": [
+        "python",
+        "-m",
+        "compileall",
+        "-q",
+        "vision"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "name": "protocol_build",
+      "command": [
+        "gcc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-Ifirmware/stm32",
+        "firmware/stm32/test_sorting_protocol.c",
+        "-o",
+        "C:\\Users\\ZHEN\\AppData\\Local\\Temp\\sorting_task_audit_d72ka_ae\\protocol.exe"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "name": "protocol_run",
+      "returncode": 0,
+      "output": "STM32 UART protocol tests passed\n"
+    },
+    {
+      "name": "controller_build",
+      "command": [
+        "gcc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-Ifirmware/stm32",
+        "firmware/stm32/sorting_controller.c",
+        "firmware/stm32/test_sorting_controller.c",
+        "-o",
+        "C:\\Users\\ZHEN\\AppData\\Local\\Temp\\sorting_task_audit_d72ka_ae\\controller.exe"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "name": "controller_run",
+      "returncode": 0,
+      "output": "STM32 controller tests passed\n"
+    }
+  ]
+}

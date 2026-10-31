@@ -2,7 +2,7 @@
 
 核查日期：2026-09-29。
 
-没有找到一个公开数据集同时满足本项目的 9 种形状、10 种颜色、躺着的圆柱、长方体、40 mm 物块、顶视+斜视相机和比赛托盘场景。因此公共数据只能用于预训练、代码验证和负样本补充，最终模型必须用项目自己的双相机实拍数据校准。
+没有找到一个公开数据集同时满足本项目的 9 种形状、10 种颜色、躺着的圆柱、长方体、40 mm 物块、固定斜视相机和比赛托盘场景。因此公共数据只能用于预训练、代码验证和负样本补充，最终模型必须用项目自己的 MaixCAM 2 实拍数据校准。
 
 ## 优先下载
 
@@ -12,8 +12,8 @@
 - 标识：`saikatpanda/cubes-craters-and-cylinder`
 - 许可证：CC0 Public Domain
 - 数据情况：约 1.3 GB，640×640 JPG，YOLO 检测标注；包含黄色/绿色立方体、红色圆柱和干扰物。
-- 用途：最接近本任务的检测预训练、YOLO 数据链路和树莓派低延迟冒烟。
-- 局限：不是实例分割；没有长方体、9 类物块、10 种颜色和你们的躺姿/双视角条件。
+- 用途：最接近本任务的检测预训练和 YOLO 数据链路验证。
+- 局限：不是实例分割；没有长方体、9 类物块、10 种颜色和你们的躺姿/单斜视条件。
 
 ```bash
 mkdir -p external_data/cubes_cylinder
@@ -101,7 +101,7 @@ unzip -q external_data/clevr/CLEVR_v1.0.zip -d external_data/clevr
 - 官方页面：[BOP datasets](https://bop.felk.cvut.cz/datasets/)；[T-LESS](https://cmp.felk.cvut.cz/t-less/)
 - 内容：真实工业物体的 RGB/RGB-D 图像、CAD 模型、6D 姿态、遮挡场景和可见/完整掩膜。T-LESS 包含 30 个无纹理工业物体，并有多个同步传感器。
 - 许可证：按数据集分别确认；T-LESS 页面标明 CC BY 4.0。BOP 中其他数据集可能有不同条款。
-- 用途：补充真实材质、遮挡、背景和深度信息；适合验证双相机/深度分支。
+- 用途：补充真实材质、遮挡、背景和深度信息；可用于评估实例分割与遮挡处理方法。
 - 局限：标签是物体 ID 和姿态，不是 `cylinder/cuboid` 语义类；需要将 BOP 掩膜/框转换为 YOLO 格式，并确认物体几何是否真的对应目标类别。
 
 ```bash
@@ -132,7 +132,7 @@ kaggle datasets download \
 ### ShapeNetCore
 
 - 平台：[Hugging Face](https://huggingface.co/datasets/ShapeNet/ShapeNetCore)
-- 内容：约 51,300 个三维模型、55 个常见类别；可以筛选 cylinder、cube 等模型后用 Blender/BlenderProc 从顶视和斜视渲染合成数据。
+- 内容：约 51,300 个三维模型、55 个常见类别；可以筛选 cylinder、cube 等模型后用 Blender/BlenderProc 按固定斜视角渲染合成数据。
 - 访问：需要手动接受 ShapeNet 条款，仓库为 gated；许可证显示为 `other`，不能直接视为商业可用。
 - 用途：在自采数据不足时做姿态、光照、背景和遮挡的合成预训练。
 - 风险：合成到真实 3D 打印物块存在域差异，必须用真实数据微调；商业发布前需要逐项确认 ShapeNet 条款。
@@ -163,7 +163,7 @@ find external_data -iname 'data.yaml' -o -iname '*.names' -o -iname 'classes.txt
 
 ## 最终使用建议
 
-1. 用 `saikatpanda/cubes-craters-and-cylinder` 验证 YOLO 检测和树莓派推理链路。
+1. 用 `saikatpanda/cubes-craters-and-cylinder` 验证 YOLO 数据与检测流程。
 2. 用 `0-ma/geometric-shapes` 验证分类训练、日志和数据增强。
-3. 只把公开数据作为 warm-start 或负样本，主模型至少使用项目自采的顶视与斜视分割数据。
+3. 只把公开数据作为 warm-start 或负样本；部署模型必须用项目自采的固定斜视分割数据训练和验证，并确认 MaixCAM 2 SDK 支持模型格式与算子。
 4. 对长方体/躺圆柱建立独立 hard-case 测试集，按 `cylinder_to_cuboid` 和 `cuboid_to_cylinder` 分别验收。

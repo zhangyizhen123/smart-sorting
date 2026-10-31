@@ -1,0 +1,36 @@
+{
+  "camera": {
+    "name": "MaixCAM2",
+    "view": "fixed_oblique",
+    "resolution": [1920, 1080],
+    "manual_focus": true,
+    "exposure_locked": true,
+    "white_balance_locked": true,
+    "covers_tray": true
+  },
+  "calibration": {
+    "path": "vision/configs/tray_homography.json",
+    "tray_size_mm": [160.0, 160.0],
+    "max_grab_error_mm": 5.0
+  },
+  "consensus": {
+    "required_frames": 3,
+    "min_confidence": 0.65,
+    "max_position_error_mm": 8.0
+  },
+  "round": {
+    "max_bins": 6,
+    "assignment": "first_stable_detection",
+    "rescan_after_drop": true,
+    "retry_after_drop_failure": true
+  },
+  "uart": {
+    "baudrate": 115200,
+    "device": "/dev/ttyS1",
+    "protocol": "smart-sort-v1"
+  },
+  "drop_sensor": {
+    "debounce_ms": 80,
+    "timeout_ms": 1500
+  }
+}
