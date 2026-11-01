@@ -72,6 +72,9 @@ def main() -> None:
             if args.pipeline:
                 expect(page.locator("#active-pipeline")).to_contain_text("专项模型")
                 expect(page.locator("#active-pipeline")).to_contain_text("首版对照")
+                expect(page.locator("#start-command")).to_contain_text("演示专项模型.cmd")
+                expect(page.locator("#confidence-value")).to_have_text(f"{manifest['settings']['conf']:.2f}")
+                expect(page.locator("#active-pipeline")).to_contain_text(f"验收使用置信度 {manifest['settings']['conf']:.2f}")
 
             for name, content, (width, height) in images:
                 page.get_by_label("选择图片", exact=True).set_input_files({"name": name, "mimeType": "image/jpeg" if name.endswith("jpg") else "image/png", "buffer": content})
@@ -120,6 +123,8 @@ def main() -> None:
             page.locator("#confidence").press("End")
             expect(page.locator("#confidence-value")).to_have_text("0.95")
             expect(page.locator("#prediction-overlay polygon")).to_have_count(0)
+            if args.pipeline:
+                expect(page.locator("#active-pipeline")).to_contain_text("当前阈值已改变")
             page.get_by_label("选择图片", exact=True).set_input_files({"name": "空白.png", "mimeType": "image/png", "buffer": png_bytes(Image.new("RGB", (320, 320), "white"))})
             with page.expect_response(lambda response: "/api/predict?" in response.url, timeout=60000) as pending:
                 page.get_by_role("button", name="识别形状", exact=True).click()

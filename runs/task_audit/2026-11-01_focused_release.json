@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-11-01T04:10:56-08:00",
+  "training_profile": "cpu_pilot",
+  "completed_epochs": 20,
+  "baseline_strict_score": 0.57095046854083,
+  "final_strict_score": 0.9361990184464376,
+  "target_achieved": false,
+  "legacy_baseline_strict_score": 0.7216117216117216,
+  "legacy_final_strict_score": 0.656934306569343,
+  "staged_bytes_match_evaluated": true,
+  "artifact_sha256": {
+    "models/trained/stl_shape_focus_v2/best.pt": "d51cc9c95e9949691f9aafc8bf7efd5adf746b2578f3e7a0b755553a127f36e0",
+    "models/trained/stl_shape_focus_v2/pipeline.json": "eb849210fcbeea2437f6ebc917aeb148af334fe7794fba1ac5ee0c0b1159b410",
+    "models/trained/stl_shape_focus_v2/refiner/metadata.json": "94baef3056cd00c3fdd80b3744d609cee14150b61f9651eaff604ac2c97ef969",
+    "models/trained/stl_shape_focus_v2/refiner/refiner.pt": "ba9e0f26fee317abf67ebfbb76a0becee7765769e36fd207a0b3882ce79c3d1b",
+    "docs/三组专项数据冻结清单.json": "71e604416562a0f06ebf8e7539d79db17ceef0dfaa6a77ae82c9bd16d3a9e683",
+    "vision/scripts/make_focused_dataset.py": "fcb4e05b92793ad4995fd8d395f467ffa7ee8407aa2f9000bece55baf64a0cca",
+    "vision/scripts/make_stl_synthetic.py": "fbcb5b626f1097a31caf63c7f7a882cd921fa57623c55193dff78506d2945b17"
+  },
+  "launched_cmd_from_outside_project": true,
+  "ui_audit": "runs/task_audit/2026-11-01_focused_upload.json",
+  "offline_audit": "runs/task_audit/2026-11-01_stl_demo.json",
+  "task_tracker_checked": true,
+  "task_count": 112,
+  "unfinished": [
+    "full YOLO11s-seg 640/150 training",
+    "99% strict target",
+    "legacy distribution regression repair",
+    "physical-camera validation"
+  ]
+}

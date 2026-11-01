@@ -1,5 +1,11 @@
 # Keep bundled sample and result hashes stable across Windows/Linux checkouts.
 docs/stl_shape_v1_demo/** -text
+models/trained/stl_shape_focus_v2/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/三组专项数据冻结清单.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Frozen generator hashes refer to the LF source bytes used for this dataset.
+vision/scripts/make_focused_dataset.py text eol=lf
+vision/scripts/make_stl_synthetic.py text eol=lf
 
 # Double-click entry points must retain Windows command-file line endings.
 *.cmd text eol=crlf

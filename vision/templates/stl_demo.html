@@ -111,8 +111,8 @@
     </section>
   </div>
   <div class="below">
-    <section><h2>已经做成了什么</h2><p>九个 STL → 1,080 张合成图及自动标注 → 864 / 108 / 108 张训练、验证、测试图 → 20 轮训练 → 独立测试评估。</p><p>图上编号对应下方列表，轮廓、类别和置信度来自同一次模型输出。重复框和误识别完整保留。</p></section>
-    <section><h2>接下来怎样落到实物上</h2><p>取得托盘与物块，用最终固定相机采集真实图像，再做预标注、人工复核、微调和独立实拍测试。</p><p>双击项目根目录的「演示模型.cmd」即可导入新图片并识别，使用期间保留启动窗口。单独打开此 HTML 文件仍可查看预置样例。</p></section>
+    <section><h2>首版已经做成了什么</h2><p>九个 STL → 1,080 张合成图及自动标注 → 864 / 108 / 108 张训练、验证、测试图 → 20 轮训练 → 独立测试评估。</p><p>图上编号对应下方列表，轮廓、类别和置信度来自同一次模型输出。预置样例保留首版的重复框和误识别结果。</p></section>
+    <section><h2>接下来怎样落到实物上</h2><p>取得托盘与物块，用最终固定相机采集真实图像，再做预标注、人工复核、微调和独立实拍测试。</p><p id="start-command">双击项目根目录的「演示模型.cmd」即可导入新图片并识别，使用期间保留启动窗口。单独打开此 HTML 文件仍可查看预置样例。</p></section>
   </div>
   <details><summary>样例选取、推理参数与结果来源</summary><p id="selection"></p><p id="provenance"></p><p>预置样例显示已保存结果，自选图片在点击识别后由本机模型计算。置信度表示模型对某个预测的信心；改变导入图片的显示阈值，不会修改完整合成测试集指标。</p></details>
 </main>
@@ -199,6 +199,14 @@
   function uploadMessage(message, error = false) {
     el('upload-status').textContent = message; el('upload-status').classList.toggle('error', error);
   }
+  function updatePipelineNotice() {
+    if (!data.active_pipeline) return;
+    const e = data.active_pipeline.evaluation;
+    const evaluatedConfidence = data.active_pipeline.settings.conf;
+    const changed = Math.abs(Number(el('confidence').value) - evaluatedConfidence) > 1e-6;
+    el('active-pipeline').hidden = false;
+    el('active-pipeline').textContent = '导入图片使用专项模型' + (e.target_achieved ? '' : '（试验版）') + '；冻结合成测试严格实例得分 ' + (e.strict_instance_score * 100).toFixed(2) + '%（' + e.instances + ' 个实例）。' + (e.target_achieved ? '已达到本次合成测试99%目标。' : '尚未达到99%目标。') + '验收使用置信度 ' + evaluatedConfidence.toFixed(2) + '。' + (changed ? '当前阈值已改变，上述分数不代表当前设置的表现。' : '') + '预置样例和上方mAP仍为首版对照。' + (data.active_pipeline.refiner_enabled ? '已启用经过验证的类别复核。' : '本轮使用分割模型直接判断。') + '实拍效果尚未验证。';
+  }
   function updateControls() {
     el('image-file').disabled = !connected || busy;
     el('confidence').disabled = !connected || busy;
@@ -219,7 +227,7 @@
       uploadMessage('请选择图片，再点击“识别形状”。处理期间请保留启动窗口。');
     } catch (error) {
       connected = false; el('reconnect').hidden = false;
-      uploadMessage('未连接到本机模型。请保持“演示模型.cmd”的窗口打开，然后点“重新连接模型”。', true);
+      uploadMessage('未连接到本机模型。请保持“' + (data.active_pipeline ? '演示专项模型.cmd' : '演示模型.cmd') + '”的窗口打开，然后点“重新连接模型”。', true);
     }
     updateControls();
   }
@@ -275,6 +283,7 @@
   });
   el('confidence').addEventListener('input', () => {
     el('confidence-value').textContent = Number(el('confidence').value).toFixed(2);
+    updatePipelineNotice();
     if (uploaded && !busy) { uploaded = {...uploaded, status: 'selected', predictions: []}; uploadMessage('置信度已调整，请点击“识别形状”重新计算。'); render(); }
   });
   el('show-upload').addEventListener('click', () => { if (uploaded) { active = -1; render(); } });
@@ -291,9 +300,10 @@
   el('selection').textContent = data.selection;
   el('provenance').textContent = '结果生成：' + data.generated_at + '；输入 ' + data.settings.imgsz + '；Ultralytics ' + data.ultralytics + '；模型 SHA-256：' + data.model_sha256;
   if (data.active_pipeline) {
-    const e = data.active_pipeline.evaluation;
-    el('active-pipeline').hidden = false;
-    el('active-pipeline').textContent = '导入图片使用专项模型；冻结合成测试严格实例得分 ' + (e.strict_instance_score * 100).toFixed(2) + '%（' + e.instances + ' 个实例）。' + (e.target_achieved ? '已达到本次合成测试99%目标。' : '尚未达到99%目标。') + '预置样例和上方mAP仍为首版对照。' + (data.active_pipeline.refiner_enabled ? '已启用经过验证的类别复核。' : '本轮使用分割模型直接判断。');
+    el('confidence').value = data.active_pipeline.settings.conf;
+    el('confidence-value').textContent = Number(el('confidence').value).toFixed(2);
+    updatePipelineNotice();
+    el('start-command').textContent = '双击项目根目录的「演示专项模型.cmd」即可导入新图片并识别，使用期间保留启动窗口。原「演示模型.cmd」继续提供首版对照。单独打开 HTML 文件仍只展示预置样例。';
   }
   render();
   connect();

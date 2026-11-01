@@ -1,0 +1,13 @@
+{
+  "selection": "First eight erroneous images in deterministic test order; no cherry picking",
+  "examples": [
+    "images/test/focused_v2_20261102_test_00_00003.jpg",
+    "images/test/focused_v2_20261102_test_00_00015.jpg",
+    "images/test/focused_v2_20261102_test_00_00045.jpg",
+    "images/test/focused_v2_20261102_test_00_00055.jpg",
+    "images/test/focused_v2_20261102_test_00_00062.jpg",
+    "images/test/focused_v2_20261102_test_00_00063.jpg",
+    "images/test/focused_v2_20261102_test_00_00065.jpg",
+    "images/test/focused_v2_20261102_test_00_00092.jpg"
+  ]
+}

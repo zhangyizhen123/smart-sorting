@@ -182,7 +182,8 @@ def main() -> None:
         pipeline = ShapePipeline(args.pipeline)
         model, model_hash = pipeline.model, pipeline.model_hash
         payload["active_pipeline"] = {"model_sha256": model_hash, "pipeline_sha256": pipeline.pipeline_hash,
-                                      "evaluation": pipeline.manifest["evaluation"], "refiner_enabled": pipeline.refiner is not None}
+                                      "evaluation": pipeline.manifest["evaluation"], "settings": pipeline.settings,
+                                      "refiner_enabled": pipeline.refiner is not None}
     else:
         model = load_model()
     page = render_demo(payload).encode("utf-8")

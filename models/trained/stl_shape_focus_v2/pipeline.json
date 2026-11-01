@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "model": "best.pt",
+  "model_sha256": "d51cc9c95e9949691f9aafc8bf7efd5adf746b2578f3e7a0b755553a127f36e0",
+  "settings": {
+    "imgsz": 320,
+    "conf": 0.25,
+    "iou": 0.7,
+    "device": "cpu",
+    "retina_masks": true,
+    "agnostic_nms": true
+  },
+  "refiner": "refiner",
+  "refiner_sha256": "ba9e0f26fee317abf67ebfbb76a0becee7765769e36fd207a0b3882ce79c3d1b",
+  "refiner_metadata_sha256": "94baef3056cd00c3fdd80b3744d609cee14150b61f9651eaff604ac2c97ef969",
+  "evaluation": {
+    "strict_instance_score": 0.9361990184464376,
+    "instances": 5907,
+    "synthetic_only": true,
+    "target_achieved": false
+  }
+}
