@@ -1,0 +1,72 @@
+{
+  "version": "focused_v2",
+  "seed": 20261102,
+  "image_size": 640,
+  "counts": {
+    "train": 800,
+    "val": 100,
+    "test": 320
+  },
+  "summary": {
+    "train": {
+      "images": 7200,
+      "instances": 14763,
+      "per_class": {
+        "cylinder": 2340,
+        "cone": 1647,
+        "tetrahedron": 922,
+        "hex_prism": 1645,
+        "tri_prism": 2011,
+        "cuboid": 2345,
+        "sphere": 919,
+        "cube": 1288,
+        "pent_prism": 1646
+      }
+    },
+    "val": {
+      "images": 900,
+      "instances": 1842,
+      "per_class": {
+        "cylinder": 289,
+        "cone": 206,
+        "hex_prism": 203,
+        "tri_prism": 248,
+        "pent_prism": 210,
+        "tetrahedron": 115,
+        "cuboid": 293,
+        "cube": 164,
+        "sphere": 114
+      }
+    },
+    "test": {
+      "images": 2880,
+      "instances": 5907,
+      "per_class": {
+        "cylinder": 938,
+        "cone": 650,
+        "hex_prism": 661,
+        "pent_prism": 657,
+        "sphere": 386,
+        "tri_prism": 798,
+        "cuboid": 934,
+        "cube": 510,
+        "tetrahedron": 373
+      }
+    }
+  },
+  "manifest_sha256": "677dea3e430c2d52df5e15b94cfb59c28823814241ce00e59ceca1307d38c5ed",
+  "stl_sha256": {
+    "cylinder": "77c89add263e7ec920393bdeca752ee31a2ab8d3828f178714d15de2c518e5c2",
+    "cube": "aa5ea48f8e9791213a32ebe0e8b7af70005bb3a7cc4574c7d5f9db0e93b789a1",
+    "cuboid": "35515bf51c139e28c699d2e79c7ce90116c3a3de7e936faa455b41015100b2f3",
+    "tri_prism": "639fdf375bcaf8f268c46015345df95a204ff23201ee868edc7e13bf375eeb7b",
+    "pent_prism": "d73780b690aeec10bb0b9f3b530107b9ebfe4182c7c8005cc8a274b1b6561f67",
+    "hex_prism": "725c1e93b81a7be64735fa8639a89578f9fc6ce471b66b61299ac80622712a1a",
+    "cone": "e033adb5ede12038c3cfc601a78d6ea91a5f510c872bd9cd020157a694aa7d57",
+    "tetrahedron": "eca1947ddefeb3eaa84183a76ca415d848912af3568f0361c18901a53f06a898",
+    "sphere": "e8e6682b63403634d576a2db7fb7c2caa0199c11976b4bb39631e684cdce1746"
+  },
+  "generator_sha256": "fcb4e05b92793ad4995fd8d395f467ffa7ee8407aa2f9000bece55baf64a0cca",
+  "renderer_sha256": "fbcb5b626f1097a31caf63c7f7a882cd921fa57623c55193dff78506d2945b17",
+  "note": "Same-scene physical scale; stable face-supported poses; visible connected polygons; no external photos"
+}

@@ -1,0 +1,7 @@
+{
+  "dataset": {"train_per_class": 800, "val_per_class": 100, "test_per_class": 320, "image_size": 640, "seed": 20261102},
+  "cpu_pilot": {"initial_model": "models/trained/stl_shape_v1/best.pt", "imgsz": 320, "epochs": 20, "batch": 4, "train_per_class": 60, "patience": 8, "lr0": 0.0003, "threads": 2, "device": "cpu"},
+  "full": {"initial_model": "yolo11s-seg.pt", "imgsz": 640, "epochs": 150, "batch": 8, "train_per_class": 800, "patience": 30, "lr0": 0.001, "threads": 2, "device": "auto"},
+  "evaluation": {"conf": 0.25, "match_iou": 0.5, "nms_iou": 0.7, "target": 0.99},
+  "notes": "CPU pilot is an explicitly limited experiment, not the full 640/150-epoch plan. Selection uses validation only; test runs once after selection. No reject option."
+}

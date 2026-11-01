@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-11-01T02:44:13-08:00",
+  "model_sha256": "61e320e074a0a4197f84b2e4f5e7701028c0c49aa4863613bee7a2792dd4595c",
+  "pipeline_sha256": "96c968f17674cd2d44122a564b62719f7caaae85acf0518565b744011579aeda",
+  "scope": "UI/API consistency; model accuracy is evaluated separately on the frozen dataset",
+  "cases": [
+    {
+      "name": "圆柱样例.jpg",
+      "size": [
+        320,
+        320
+      ],
+      "predictions": 1,
+      "class_ids": [
+        2
+      ]
+    },
+    {
+      "name": "横向测试.png",
+      "size": [
+        640,
+        360
+      ],
+      "predictions": 1,
+      "class_ids": [
+        0
+      ]
+    },
+    {
+      "name": "竖向测试.png",
+      "size": [
+        320,
+        640
+      ],
+      "predictions": 1,
+      "class_ids": [
+        0
+      ]
+    }
+  ],
+  "real_model_inference": true,
+  "non_square_mask_alignment": true,
+  "sample_and_import_navigation": true,
+  "threshold_clears_old_result": true,
+  "empty_result_and_bad_file_recovery": true,
+  "exif_orientation_and_large_image_resize": true,
+  "request_validation": true,
+  "browser_errors": []
+}

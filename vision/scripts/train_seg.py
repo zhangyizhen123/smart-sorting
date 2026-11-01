@@ -37,11 +37,20 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--hsv-s", type=float, default=0.5)
     p.add_argument("--hsv-v", type=float, default=0.35)
     p.add_argument("--no-amp", action="store_true")
+    p.add_argument("--focused", action="store_true", help="Preserve geometry for pairwise shape training")
+    p.add_argument("--threads", type=int, default=2, help="CPU intra-op threads; avoids laptop oversubscription")
+    p.add_argument("--save-period", type=int, default=-1)
+    p.add_argument("--resume", action="store_true", help="Resume --model last.pt with its saved optimizer")
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.threads < 1:
+        raise ValueError("threads must be positive")
+    import ultralytics.utils.torch_utils as torch_utils
+    torch_utils.NUM_THREADS = args.threads
+    torch.set_num_threads(args.threads)
     device = args.device or ("cuda:0" if torch.cuda.is_available() else "cpu")
     cache = False if args.cache == "none" else args.cache
     amp = not args.no_amp and device != "cpu"
@@ -52,6 +61,9 @@ def main() -> None:
     model_name = str(model_path) if model_path.exists() else args.model
 
     model = YOLO(model_name)
+    if args.resume:
+        model.train(resume=True, device=device, workers=args.workers)
+        return
     model.train(
         data=str(data),
         epochs=args.epochs,
@@ -71,14 +83,14 @@ def main() -> None:
         warmup_epochs=3.0,
         patience=args.patience,
         amp=amp,
-        close_mosaic=15,
-        mosaic=0.5,
-        mixup=0.05,
-        copy_paste=0.1,
-        degrees=180.0,
+        close_mosaic=min(15, max(1, args.epochs // 5)),
+        mosaic=0.0 if args.focused else 0.5,
+        mixup=0.0 if args.focused else 0.05,
+        copy_paste=0.0 if args.focused else 0.1,
+        degrees=10.0 if args.focused else 180.0,
         translate=0.05,
         scale=0.2,
-        shear=2.0,
+        shear=0.0 if args.focused else 2.0,
         perspective=0.0,
         fliplr=0.5,
         flipud=0.0,
@@ -89,6 +101,7 @@ def main() -> None:
         mask_ratio=2,
         plots=True,
         save=True,
+        save_period=args.save_period,
         verbose=True,
     )
 

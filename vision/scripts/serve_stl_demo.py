@@ -51,11 +51,12 @@ def decode_image(content: bytes) -> tuple[Image.Image, tuple[int, int]]:
 class DemoServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address: tuple[str, int], model, page: bytes, model_hash: str):
+    def __init__(self, address: tuple[str, int], model, page: bytes, model_hash: str, pipeline=None):
         super().__init__(address, DemoHandler)
         self.model = model
         self.page = page
         self.model_hash = model_hash
+        self.pipeline = pipeline
         self.inference_lock = threading.Lock()
 
 
@@ -96,7 +97,8 @@ class DemoHandler(BaseHTTPRequestHandler):
         if path in {"/", "/index.html"}:
             self.reply(200, self.server.page, "text/html; charset=utf-8")
         elif path == "/api/health":
-            self.reply(200, {"ready": True, "model_sha256": self.server.model_hash, "names": NAMES, "chinese_names": CHINESE_NAMES, "max_bytes": MAX_BYTES})
+            self.reply(200, {"ready": True, "model_sha256": self.server.model_hash, "names": NAMES, "chinese_names": CHINESE_NAMES, "max_bytes": MAX_BYTES,
+                             "pipeline_sha256": self.server.pipeline.pipeline_hash if self.server.pipeline else None})
         elif path == "/favicon.ico":
             self.reply(204, b"", "image/x-icon")
         else:
@@ -134,8 +136,11 @@ class DemoHandler(BaseHTTPRequestHandler):
             image, original_size = decode_image(content)
             settings = {**PREDICTION_SETTINGS, "conf": confidence}
             start = time.perf_counter()
-            result = self.server.model.predict(source=image, verbose=False, **settings)[0]
-            predictions = serialize_predictions(result)
+            if self.server.pipeline:
+                predictions, settings = self.server.pipeline.predict(image, confidence)
+            else:
+                result = self.server.model.predict(source=image, verbose=False, **settings)[0]
+                predictions = serialize_predictions(result)
             preview = io.BytesIO()
             image.save(preview, format="PNG")
             filename = unquote(self.headers.get("X-Filename", "自选图片"))[:200]
@@ -146,6 +151,7 @@ class DemoHandler(BaseHTTPRequestHandler):
                 "image_data": "data:image/png;base64," + base64.b64encode(preview.getvalue()).decode("ascii"),
                 "predictions": predictions, "settings": settings,
                 "model_sha256": self.server.model_hash,
+                "pipeline_sha256": self.server.pipeline.pipeline_hash if self.server.pipeline else None,
                 "elapsed_seconds": round(time.perf_counter() - start, 3),
             })
         except ValueError as exc:
@@ -163,20 +169,29 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--no-open", action="store_true")
+    parser.add_argument("--pipeline", help="Path to an evaluated pipeline.json; bundled examples remain the v1 reference")
     args = parser.parse_args()
     payload = json.loads((DEMO / "predictions.json").read_text(encoding="utf-8"))
     model_hash = digest(MODEL)
     if model_hash != payload["model_sha256"]:
         raise ValueError("Saved examples use a different model; regenerate them before starting the demo")
     print("Loading local shape model...", flush=True)
-    model = load_model()
+    pipeline = None
+    if args.pipeline:
+        from shape_pipeline import ShapePipeline
+        pipeline = ShapePipeline(args.pipeline)
+        model, model_hash = pipeline.model, pipeline.model_hash
+        payload["active_pipeline"] = {"model_sha256": model_hash, "pipeline_sha256": pipeline.pipeline_hash,
+                                      "evaluation": pipeline.manifest["evaluation"], "refiner_enabled": pipeline.refiner is not None}
+    else:
+        model = load_model()
     page = render_demo(payload).encode("utf-8")
     try:
-        server = DemoServer(("127.0.0.1", args.port), model, page, model_hash)
+        server = DemoServer(("127.0.0.1", args.port), model, page, model_hash, pipeline)
     except OSError as exc:
         if exc.errno not in {48, 98, 10048} and getattr(exc, "winerror", None) != 10048:
             raise
-        server = DemoServer(("127.0.0.1", 0), model, page, model_hash)
+        server = DemoServer(("127.0.0.1", 0), model, page, model_hash, pipeline)
     url = f"http://127.0.0.1:{server.server_port}/"
     print(f"Demo ready: {url}\nKeep this window open. Press Ctrl+C to stop.", flush=True)
     if not args.no_open:

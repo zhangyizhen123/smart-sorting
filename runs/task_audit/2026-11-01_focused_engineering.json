@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-11-01T02:56:52.240767-08:00",
+  "unit_tests_passed": 10,
+  "full_dataset_images": 10980,
+  "test_instances": 5907,
+  "frozen_manifest_sha256": "677dea3e430c2d52df5e15b94cfb59c28823814241ce00e59ceca1307d38c5ed",
+  "legacy_first_image_hash_unchanged": true,
+  "frozen_label_tamper_rejected": true,
+  "pipeline_model_tamper_rejected": true,
+  "scope": "Engineering checks only; final accuracy is pending D-17/D-18",
+  "versions": {
+    "torch": "2.15.0+cpu",
+    "ultralytics": "8.4.194",
+    "numpy": "2.5.4",
+    "pillow": "13.0.0",
+    "scipy": "1.18.1"
+  }
+}

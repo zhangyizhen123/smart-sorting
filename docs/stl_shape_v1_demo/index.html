@@ -81,7 +81,8 @@
     <div class="metric"><b id="map50"></b><span>掩膜 mAP50</span></div>
     <div class="metric"><b id="map5095"></b><span>掩膜 mAP50–95 · 更严格的轮廓指标</span></div>
   </section>
-  <p class="notice">上面的指标来自合成测试集，不是导入图片的准确率。本模型只学习了九类合成形状，其他物体也可能被误判；正方体与长方体仍容易混淆，真实物块效果尚未验证。</p>
+  <p class="notice">上面的指标和预置样例来自首版合成测试集，不是导入图片的准确率。本模型只学习了九类合成形状，其他物体也可能被误判；正方体与长方体仍容易混淆，真实物块效果尚未验证。</p>
+  <p id="active-pipeline" class="notice" hidden></p>
   <section class="upload-panel" aria-labelledby="upload-heading">
     <h2 id="upload-heading">导入自己的图片</h2>
     <p class="muted small">可识别一张图里的多个物块，显示形状、轮廓和置信度。支持 JPG、PNG、WebP、BMP，单张不超过 20 MB。图片只在本机处理。</p>
@@ -159,7 +160,7 @@
     objects.forEach((item, index) => {
       const row = document.createElement('li'), chip = document.createElement('span'), label = document.createElement('span');
       chip.className = 'chip'; chip.style.setProperty('--chip', colors[index % colors.length]); chip.textContent = index + 1;
-      label.textContent = data.chinese_names[item.class_id] + ' · ' + data.names[item.class_id] + (confidence ? ' · ' + (item.confidence * 100).toFixed(1) + '%' : ' · 标注');
+      label.textContent = data.chinese_names[item.class_id] + ' · ' + data.names[item.class_id] + (confidence ? ' · ' + (item.refined ? '复核后类别；基础检测置信度 ' : '') + (item.confidence * 100).toFixed(1) + '%' : ' · 标注');
       row.append(chip, label); target.appendChild(row);
     });
     if (!objects.length) { const row = document.createElement('li'); row.textContent = '未检出超过显示阈值的物块'; target.appendChild(row); }
@@ -211,7 +212,8 @@
       const response = await fetch('/api/health', {signal: AbortSignal.timeout(5000)});
       if (!response.ok) throw new Error('模型未启动');
       const health = await response.json();
-      if (!health.ready || health.model_sha256 !== data.model_sha256) throw new Error('模型版本不一致，请重新启动演示。');
+      if (!health.ready || health.model_sha256 !== (data.active_pipeline?.model_sha256 || data.model_sha256)) throw new Error('模型版本不一致，请重新启动演示。');
+      if (data.active_pipeline && health.pipeline_sha256 !== data.active_pipeline.pipeline_sha256) throw new Error('复核配置已变化，请刷新页面。');
       connected = true; maxBytes = health.max_bytes; el('reconnect').hidden = true;
       el('mode-badge').textContent = '本机模型已就绪 · 可导入图片';
       uploadMessage('请选择图片，再点击“识别形状”。处理期间请保留启动窗口。');
@@ -259,7 +261,8 @@
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || '识别失败，请重试。');
-      if (result.model_sha256 !== data.model_sha256) throw new Error('模型版本发生变化，请刷新页面。');
+      if (result.model_sha256 !== (data.active_pipeline?.model_sha256 || data.model_sha256)) throw new Error('模型版本发生变化，请刷新页面。');
+      if (data.active_pipeline && result.pipeline_sha256 !== data.active_pipeline.pipeline_sha256) throw new Error('复核配置已变化，请刷新页面。');
       uploaded = {...result, status: 'done'};
       uploadMessage(result.predictions.length ? '识别完成。请对照原图查看类别和轮廓，低置信度结果需要核实。' : '本次未检出物块。可以换一张更清晰的图片，或降低最低置信度后重试。');
     } catch (error) {
@@ -287,6 +290,11 @@
   el('map5095').textContent = data.evaluation.mask.mAP50_95.toFixed(3);
   el('selection').textContent = data.selection;
   el('provenance').textContent = '结果生成：' + data.generated_at + '；输入 ' + data.settings.imgsz + '；Ultralytics ' + data.ultralytics + '；模型 SHA-256：' + data.model_sha256;
+  if (data.active_pipeline) {
+    const e = data.active_pipeline.evaluation;
+    el('active-pipeline').hidden = false;
+    el('active-pipeline').textContent = '导入图片使用专项模型；冻结合成测试严格实例得分 ' + (e.strict_instance_score * 100).toFixed(2) + '%（' + e.instances + ' 个实例）。' + (e.target_achieved ? '已达到本次合成测试99%目标。' : '尚未达到99%目标。') + '预置样例和上方mAP仍为首版对照。' + (data.active_pipeline.refiner_enabled ? '已启用经过验证的类别复核。' : '本轮使用分割模型直接判断。');
+  }
   render();
   connect();
 </script>

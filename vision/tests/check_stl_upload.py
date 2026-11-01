@@ -27,6 +27,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:8765")
     parser.add_argument("--browser-exe", type=Path)
+    parser.add_argument("--pipeline", type=Path, help="Expected evaluated pipeline manifest")
+    parser.add_argument("--audit-name", default="2026-11-01_stl_upload.json")
     args = parser.parse_args()
     url = args.url.rstrip("/")
     audit_dir = ROOT / "runs/task_audit"
@@ -58,10 +60,18 @@ def main() -> None:
             page.on("pageerror", lambda error: errors.append(str(error)))
             health = context.request.get(url + "/api/health", timeout=60000).json()
             assert health["ready"]
-            assert health["model_sha256"] == hashlib.sha256((ROOT / "models/trained/stl_shape_v1/best.pt").read_bytes()).hexdigest()
+            if args.pipeline:
+                manifest = json.loads(args.pipeline.read_text(encoding="utf-8"))
+                assert health["model_sha256"] == manifest["model_sha256"]
+                assert health["pipeline_sha256"] == hashlib.sha256(args.pipeline.read_bytes()).hexdigest()
+            else:
+                assert health["model_sha256"] == hashlib.sha256((ROOT / "models/trained/stl_shape_v1/best.pt").read_bytes()).hexdigest()
             page.goto(url, wait_until="load")
             expect(page.locator("#mode-badge")).to_contain_text("本机模型已就绪", timeout=15000)
             expect(page.get_by_label("选择图片", exact=True)).to_be_enabled()
+            if args.pipeline:
+                expect(page.locator("#active-pipeline")).to_contain_text("专项模型")
+                expect(page.locator("#active-pipeline")).to_contain_text("首版对照")
 
             for name, content, (width, height) in images:
                 page.get_by_label("选择图片", exact=True).set_input_files({"name": name, "mimeType": "image/jpeg" if name.endswith("jpg") else "image/png", "buffer": content})
@@ -75,6 +85,8 @@ def main() -> None:
                 result = response.json()
                 assert (result["width"], result["height"]) == (width, height)
                 assert result["model_sha256"] == health["model_sha256"]
+                if args.pipeline:
+                    assert result["pipeline_sha256"] == health["pipeline_sha256"]
                 expect(page.locator("#case-status")).to_contain_text("本机实时预测", timeout=15000)
                 expect(page.locator("#prediction-list li")).to_have_count(max(1, len(result["predictions"])))
                 assert page.locator("#original").evaluate("image => [image.naturalWidth, image.naturalHeight]") == [width, height]
@@ -82,11 +94,13 @@ def main() -> None:
                 assert abs(stage["width"] / stage["height"] - width / height) < 0.01
                 for position, prediction in enumerate(result["predictions"]):
                     expect(page.locator("#prediction-list li").nth(position)).to_contain_text(health["chinese_names"][prediction["class_id"]])
+                    if prediction.get("refined"):
+                        expect(page.locator("#prediction-list li").nth(position)).to_contain_text("基础检测置信度")
                     points = page.locator("#prediction-overlay polygon").nth(position).get_attribute("points")
                     actual = [[float(value) for value in pair.split(",")] for pair in points.split()]
                     assert len(actual) == len(prediction["polygon"])
                     assert all(abs(x - nx * 320) < 1e-4 and abs(y - ny * 320 * height / width) < 1e-4 for (x, y), (nx, ny) in zip(actual, prediction["polygon"], strict=True))
-                if name.endswith("jpg"):
+                if name.endswith("jpg") and not args.pipeline:
                     assert any(item["class_id"] == 0 for item in result["predictions"]), "A known cylinder must be inferred, not replaced by an unrelated saved sample"
                 page.locator(".case-button").nth(8).click()
                 expect(page.get_by_label("显示参考轮廓")).to_be_enabled()
@@ -98,7 +112,8 @@ def main() -> None:
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                     page.screenshot(path=str(audit_dir / "stl_upload_mobile.png"), full_page=True)
                     page.set_viewport_size({"width": 1440, "height": 1100})
-                cases_checked.append({"name": name, "size": [width, height], "predictions": len(result["predictions"])})
+                cases_checked.append({"name": name, "size": [width, height], "predictions": len(result["predictions"]),
+                                      "class_ids": [item["class_id"] for item in result["predictions"]]})
 
             # Changing the threshold must clear stale results and run actual inference again.
             page.locator("#confidence").focus()
@@ -143,6 +158,8 @@ def main() -> None:
     audit = {
         "checked_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "model_sha256": health["model_sha256"],
+        "pipeline_sha256": health.get("pipeline_sha256"),
+        "scope": "UI/API consistency; model accuracy is evaluated separately on the frozen dataset",
         "cases": cases_checked,
         "real_model_inference": True,
         "non_square_mask_alignment": True,
@@ -153,7 +170,7 @@ def main() -> None:
         "request_validation": True,
         "browser_errors": errors,
     }
-    (audit_dir / "2026-11-01_stl_upload.json").write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (audit_dir / args.audit_name).write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps(audit, ensure_ascii=False, indent=2))
 
 

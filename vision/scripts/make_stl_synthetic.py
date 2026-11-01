@@ -171,8 +171,12 @@ def render_instance(
     target_side: float,
     elevation: float,
     azimuth: float,
+    pixels_per_mm: float | None = None,
+    rotation: np.ndarray | None = None,
+    material_override: tuple[int, int, int] | None = None,
+    light_override: np.ndarray | None = None,
 ) -> tuple[Image.Image, list[tuple[float, float]]]:
-    rotation = rotation_matrix(rng)
+    rotation = rotation_matrix(rng) if rotation is None else rotation
     transformed = triangles @ rotation.T
     transformed[..., 0] -= (transformed[..., 0].min() + transformed[..., 0].max()) / 2
     transformed[..., 1] -= (transformed[..., 1].min() + transformed[..., 1].max()) / 2
@@ -189,18 +193,18 @@ def render_instance(
         # Sphere orientation does not affect its projection; use the STL-derived center and radius.
         center = (lower + upper) / 2
         center_depth = float(center @ toward_camera)
-        scale = target_side / (2 * radius)
-        light = np.asarray([0.25, -0.45, 0.86], dtype=np.float64)
+        scale = pixels_per_mm if pixels_per_mm is not None else target_side / (2 * radius)
+        light = np.asarray([0.25, -0.45, 0.86] if light_override is None else light_override, dtype=np.float64)
         light /= np.linalg.norm(light)
         layer, hull = render_sphere(
-            radius, center, scale, 7, right, up, toward_camera, light, random_material(rng)
+            radius, center, scale, 7, right, up, toward_camera, light, material_override if material_override is not None else random_material(rng)
         )
         return layer, hull
 
     min_u, max_u = float(u.min()), float(u.max())
     min_v, max_v = float(v.min()), float(v.max())
     span = max(max_u - min_u, max_v - min_v)
-    scale = target_side / max(span, 1e-6)
+    scale = pixels_per_mm if pixels_per_mm is not None else target_side / max(span, 1e-6)
     margin = 7
     width = math.ceil((max_u - min_u) * scale + margin * 2)
     height = math.ceil((max_v - min_v) * scale + margin * 2)
@@ -213,8 +217,8 @@ def render_instance(
     visible = face_normals @ toward_camera > 1e-8
     visible_ids = np.flatnonzero(visible)
     order = visible_ids[np.argsort(depth.reshape(-1, 3).mean(axis=1)[visible_ids])]
-    material = np.asarray(random_material(rng), dtype=np.float64)
-    light = np.asarray([0.25, -0.45, 0.86], dtype=np.float64)
+    material = np.asarray(material_override if material_override is not None else random_material(rng), dtype=np.float64)
+    light = np.asarray([0.25, -0.45, 0.86] if light_override is None else light_override, dtype=np.float64)
     light /= np.linalg.norm(light)
     for face_id in order:
         face = transformed[face_id]

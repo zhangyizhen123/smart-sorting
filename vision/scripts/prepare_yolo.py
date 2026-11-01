@@ -66,9 +66,12 @@ def load_group_csv(path: Path | None) -> dict[str, str]:
     if path is None:
         return {}
     result: dict[str, str] = {}
-    with path.open(newline="", encoding="utf-8") as f:
+    with path.open(newline="", encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
-            result[row["image"]] = row["group_id"]
+            key = Path(row["image"].replace("\\", "/")).stem
+            if key in result and result[key] != row["group_id"]:
+                raise ValueError(f"Conflicting scene groups for {key}")
+            result[key] = row["group_id"]
     return result
 
 

@@ -1,0 +1,2 @@
+# Install into .venv-vision after the existing vision dependencies.
+scipy>=1.15,<2
