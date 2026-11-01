@@ -27,12 +27,21 @@
     nav { display: flex; flex-direction: column; gap: 7px; }
     button, select, input { font: inherit; }
     button { cursor: pointer; border: 1px solid var(--line); background: white; color: var(--ink); border-radius: 7px; padding: 9px 12px; }
+    button:disabled, input:disabled { opacity: .55; cursor: not-allowed; }
+    .primary { background: var(--teal); border-color: var(--teal); color: white; }
+    .upload-panel { background: white; border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; }
+    .upload-controls { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; }
+    .file-field { display: grid; gap: 5px; font-size: 14px; min-width: 0; }
+    input[type="file"] { max-width: 100%; width: 300px; font-size: 13px; }
+    input[type="range"] { width: 120px; vertical-align: middle; }
+    .upload-status { color: var(--muted); font-size: 13px; margin: 12px 0 0; overflow-wrap: anywhere; }
+    .upload-status.error { color: #a12c26; }
     button:focus-visible, input:focus-visible { outline: 3px solid #70aea9; outline-offset: 2px; }
     .case-button { text-align: left; font-size: 14px; }
     .case-button[aria-pressed="true"] { background: var(--teal); color: white; border-color: var(--teal); }
     .viewer { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
     .toolbar { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
-    .toolbar h2 { margin: 0; }
+    .toolbar h2 { margin: 0; overflow-wrap: anywhere; }
     .toggles { display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap; }
     label { cursor: pointer; }
     input { accent-color: var(--teal); }
@@ -64,7 +73,7 @@
 <main>
   <header>
     <div><p class="eyebrow">智能分拣 / 阶段成果</p><h1>九类形状模型 · 看见每一个物块</h1><p class="muted">从 STL 建模文件自动生成图像和轮廓标注，训练形状识别与实例分割模型。</p></div>
-    <span class="badge">合成数据演示 · 已保存的推理结果</span>
+    <span class="badge" id="mode-badge">合成数据演示 · 已保存的推理结果</span>
   </header>
   <section class="metrics" aria-label="完整合成测试集指标">
     <div class="metric"><b>9 类</b><span>几何形状 · YOLO11n-seg</span></div>
@@ -72,7 +81,19 @@
     <div class="metric"><b id="map50"></b><span>掩膜 mAP50</span></div>
     <div class="metric"><b id="map5095"></b><span>掩膜 mAP50–95 · 更严格的轮廓指标</span></div>
   </section>
-  <p class="notice">目前展示的是合成图像识别，不能代表真实物块效果。正方体与长方体仍容易混淆；颜色、抓取坐标和 MaixCAM 2 部署尚未验证。</p>
+  <p class="notice">上面的指标来自合成测试集，不是导入图片的准确率。本模型只学习了九类合成形状，其他物体也可能被误判；正方体与长方体仍容易混淆，真实物块效果尚未验证。</p>
+  <section class="upload-panel" aria-labelledby="upload-heading">
+    <h2 id="upload-heading">导入自己的图片</h2>
+    <p class="muted small">可识别一张图里的多个物块，显示形状、轮廓和置信度。支持 JPG、PNG、WebP、BMP，单张不超过 20 MB。图片只在本机处理。</p>
+    <div class="upload-controls">
+      <label class="file-field" for="image-file">选择图片<input id="image-file" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,.jpg,.jpeg,.png,.webp,.bmp" disabled></label>
+      <label class="small" for="confidence">最低置信度 <input id="confidence" type="range" min="0.05" max="0.95" step="0.05" value="0.25" disabled> <output id="confidence-value" for="confidence">0.25</output></label>
+      <button id="recognize" type="button" class="primary" disabled>识别形状</button>
+      <button id="show-upload" type="button" hidden>查看导入图片</button>
+      <button id="reconnect" type="button" hidden>重新连接模型</button>
+    </div>
+    <p id="upload-status" class="upload-status" role="status">当前为离线样例页。要识别自己的图片，请双击项目根目录的“演示模型.cmd”，在自动打开的页面操作。</p>
+  </section>
   <div class="workspace">
     <nav id="cases" aria-label="选择演示样例"></nav>
     <section class="viewer" aria-label="样例对照">
@@ -82,7 +103,7 @@
         <label><input id="show-box" type="checkbox" checked> 显示预测框</label>
       </div></div>
       <div class="comparison">
-        <div><h3>输入图像</h3><div class="stage"><img id="original" alt="输入的合成测试图"><svg id="truth-overlay" viewBox="0 0 320 320" aria-hidden="true"></svg></div><ul id="truth-list" class="object-list" aria-label="标注中的物块"></ul></div>
+        <div><h3>输入图像</h3><div class="stage"><img id="original" alt="输入图像"><svg id="truth-overlay" viewBox="0 0 320 320" aria-hidden="true"></svg></div><ul id="truth-list" class="object-list" aria-label="标注中的物块"></ul></div>
         <div><h3>模型预测</h3><div class="stage"><img id="predicted" alt="模型预测的底图"><svg id="prediction-overlay" viewBox="0 0 320 320" aria-hidden="true"></svg></div><ul id="prediction-list" class="object-list" aria-label="模型输出的全部物块"></ul></div>
       </div>
       <p class="case-status" id="case-status" aria-live="polite"></p>
@@ -90,9 +111,9 @@
   </div>
   <div class="below">
     <section><h2>已经做成了什么</h2><p>九个 STL → 1,080 张合成图及自动标注 → 864 / 108 / 108 张训练、验证、测试图 → 20 轮训练 → 独立测试评估。</p><p>图上编号对应下方列表，轮廓、类别和置信度来自同一次模型输出。重复框和误识别完整保留。</p></section>
-    <section><h2>接下来怎样落到实物上</h2><p>取得托盘与物块，用最终固定相机采集真实图像，再做预标注、人工复核、微调和独立实拍测试。</p><p>这页可以离线打开。现场重新运行模型：双击项目根目录的「演示模型.cmd」，等待生成结果后会自动打开本页。</p></section>
+    <section><h2>接下来怎样落到实物上</h2><p>取得托盘与物块，用最终固定相机采集真实图像，再做预标注、人工复核、微调和独立实拍测试。</p><p>双击项目根目录的「演示模型.cmd」即可导入新图片并识别，使用期间保留启动窗口。单独打开此 HTML 文件仍可查看预置样例。</p></section>
   </div>
-  <details><summary>样例选取、推理参数与结果来源</summary><p id="selection"></p><p id="provenance"></p><p>置信度表示模型对某个预测的信心，不是实物识别准确率。页面切换显示已计算结果；完整测试指标使用独立评估流程，演示显示阈值不会修改它们。</p></details>
+  <details><summary>样例选取、推理参数与结果来源</summary><p id="selection"></p><p id="provenance"></p><p>预置样例显示已保存结果，自选图片在点击识别后由本机模型计算。置信度表示模型对某个预测的信心；改变导入图片的显示阈值，不会修改完整合成测试集指标。</p></details>
 </main>
 <script id="demo-data" type="application/json">__DEMO_DATA__</script>
 <script>
@@ -100,26 +121,31 @@
   const colors = ['#205baa', '#9a3d78', '#887000', '#076f64', '#a3471b', '#624ca3', '#455e72', '#0877a0'];
   const ns = 'http://www.w3.org/2000/svg';
   let active = 0;
+  let uploaded = null, selectedFile = null, busy = false, connected = false, selectionVersion = 0;
+  let maxBytes = 20 * 1024 * 1024;
+  const localPage = location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname);
   const el = id => document.getElementById(id);
   function shape(tag, attrs) { const element = document.createElementNS(ns, tag); for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, value); return element; }
   function markerPosition(svg, x1, y1) {
+    const width = svg.viewBox.baseVal.width, height = svg.viewBox.baseVal.height;
     const previous = Array.from(svg.querySelectorAll('[data-marker]')).map(node => [Number(node.getAttribute('x')), Number(node.getAttribute('y'))]);
-    for (let row = 0; row < 14; row++) {
+    for (let row = 0; row < Math.ceil(height / 24) + 1; row++) {
       for (const offset of [0, 24, -24, 48, -48, 72, -72, 96, -96, 120, -120]) {
-        const x = Math.min(297, Math.max(1, x1 + offset));
-        const y = Math.min(297, Math.max(1, y1 - 24 + row * 24));
+        const x = Math.min(width - 23, Math.max(1, x1 + offset));
+        const y = Math.min(height - 23, Math.max(1, y1 - 24 + row * 24));
         if (previous.every(([px, py]) => Math.abs(x - px) >= 23 || Math.abs(y - py) >= 23)) return [x, y];
       }
     }
     return [1, 1];
   }
   function addOutline(svg, item, index, showMask, showBox) {
+    const width = svg.viewBox.baseVal.width, height = svg.viewBox.baseVal.height;
     const color = colors[index % colors.length];
-    const points = item.polygon.map(([x, y]) => [x * 320, y * 320]);
+    const points = item.polygon.map(([x, y]) => [x * width, y * height]);
     if (showMask && points.length) svg.appendChild(shape('polygon', {points: points.map(p => p.join(',')).join(' '), fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
     let box = item.box;
-    if (!box) { const xs = points.map(p => p[0] / 320), ys = points.map(p => p[1] / 320); box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
-    const [x1, y1, x2, y2] = box.map(v => v * 320);
+    if (!box) { const xs = points.map(p => p[0] / width), ys = points.map(p => p[1] / height); box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
+    const [x1, y1, x2, y2] = [box[0] * width, box[1] * height, box[2] * width, box[3] * height];
     if (showBox) svg.appendChild(shape('rect', {x: x1, y: y1, width: x2 - x1, height: y2 - y1, fill: 'none', stroke: color, 'stroke-width': 1.8}));
     if (showMask || showBox) {
       const [x, y] = markerPosition(svg, x1, y1);
@@ -139,16 +165,117 @@
     if (!objects.length) { const row = document.createElement('li'); row.textContent = '未检出超过显示阈值的物块'; target.appendChild(row); }
   }
   function render() {
-    const current = data.cases[active];
-    el('case-title').textContent = String(active + 1).padStart(2, '0') + ' / ' + current.title;
+    const custom = active === -1 && uploaded !== null;
+    const current = custom ? uploaded : data.cases[active];
+    el('case-title').textContent = custom ? '自选图片 / ' + current.title : String(active + 1).padStart(2, '0') + ' / ' + current.title;
     el('original').src = current.image_data; el('predicted').src = current.image_data;
+    const viewWidth = 320, viewHeight = 320 * current.height / current.width;
+    document.querySelectorAll('.stage').forEach(stage => stage.style.aspectRatio = current.width + ' / ' + current.height);
+    ['truth-overlay', 'prediction-overlay'].forEach(id => el(id).setAttribute('viewBox', '0 0 ' + viewWidth + ' ' + viewHeight));
+    el('show-truth').disabled = custom;
     el('truth-overlay').replaceChildren(); el('prediction-overlay').replaceChildren();
-    if (el('show-truth').checked) current.truth.forEach((item, index) => addOutline(el('truth-overlay'), item, index, true, false));
+    if (!custom && el('show-truth').checked) current.truth.forEach((item, index) => addOutline(el('truth-overlay'), item, index, true, false));
     current.predictions.forEach((item, index) => addOutline(el('prediction-overlay'), item, index, el('show-mask').checked, el('show-box').checked));
-    list('truth-list', current.truth, false); list('prediction-list', current.predictions, true);
-    el('case-status').textContent = '标注 ' + current.truth.length + ' 件 / 预测 ' + current.predictions.length + ' 个 · 显示置信度 ≥ ' + data.settings.conf + ' · ' + current.id + '（测试集）。预测数量相同也不代表类别全部正确。';
+    list('prediction-list', current.predictions, true);
+    if (custom) {
+      el('truth-list').replaceChildren();
+      const row = document.createElement('li'); row.textContent = '自选图片未提供标注，识别结果需要人工判断。'; el('truth-list').appendChild(row);
+      if (current.status !== 'done') {
+        el('prediction-list').replaceChildren();
+        const message = document.createElement('li');
+        message.textContent = current.status === 'working' ? '正在识别，请稍候…' : current.status === 'error' ? '本次识别未完成，请重试。' : '图片已就绪，点击“识别形状”。';
+        el('prediction-list').appendChild(message);
+      }
+      el('case-status').textContent = current.status === 'done'
+        ? '本机实时预测 ' + current.predictions.length + ' 个 · 置信度 ≥ ' + current.settings.conf + ' · 输入 ' + current.width + ' × ' + current.height + ' · 耗时 ' + current.elapsed_seconds.toFixed(2) + ' 秒。未检出不表示图片中一定没有物块。'
+        : '图片 ' + current.width + ' × ' + current.height + '；原图与预测保持相同方向和比例。';
+    } else {
+      list('truth-list', current.truth, false);
+      el('case-status').textContent = '标注 ' + current.truth.length + ' 件 / 预测 ' + current.predictions.length + ' 个 · 显示置信度 ≥ ' + data.settings.conf + ' · ' + current.id + '（测试集）。预测数量相同也不代表类别全部正确。';
+    }
     document.querySelectorAll('.case-button').forEach((button, index) => button.setAttribute('aria-pressed', index === active ? 'true' : 'false'));
   }
+  function uploadMessage(message, error = false) {
+    el('upload-status').textContent = message; el('upload-status').classList.toggle('error', error);
+  }
+  function updateControls() {
+    el('image-file').disabled = !connected || busy;
+    el('confidence').disabled = !connected || busy;
+    el('recognize').disabled = !connected || busy || !selectedFile || !uploaded;
+    el('recognize').textContent = busy ? '正在识别…' : '识别形状';
+    el('show-upload').hidden = !uploaded;
+  }
+  async function connect() {
+    if (!localPage) return;
+    try {
+      const response = await fetch('/api/health', {signal: AbortSignal.timeout(5000)});
+      if (!response.ok) throw new Error('模型未启动');
+      const health = await response.json();
+      if (!health.ready || health.model_sha256 !== data.model_sha256) throw new Error('模型版本不一致，请重新启动演示。');
+      connected = true; maxBytes = health.max_bytes; el('reconnect').hidden = true;
+      el('mode-badge').textContent = '本机模型已就绪 · 可导入图片';
+      uploadMessage('请选择图片，再点击“识别形状”。处理期间请保留启动窗口。');
+    } catch (error) {
+      connected = false; el('reconnect').hidden = false;
+      uploadMessage('未连接到本机模型。请保持“演示模型.cmd”的窗口打开，然后点“重新连接模型”。', true);
+    }
+    updateControls();
+  }
+  function readImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('读取文件失败，请重新选择。'));
+      reader.onload = async () => {
+        const preview = new Image(); preview.src = reader.result;
+        try { await preview.decode(); resolve({image_data: reader.result, width: preview.naturalWidth, height: preview.naturalHeight}); }
+        catch { reject(new Error('无法读取这张图片，请换一张有效的 JPG、PNG、WebP 或 BMP。')); }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  el('image-file').addEventListener('change', async () => {
+    const version = ++selectionVersion;
+    selectedFile = null; uploaded = null; if (active === -1) active = 0;
+    updateControls(); render();
+    const file = el('image-file').files[0]; if (!file) return;
+    if (!/\.(jpe?g|png|webp|bmp)$/i.test(file.name)) { uploadMessage('请选择 JPG、PNG、WebP 或 BMP 图片。', true); return; }
+    if (!file.size || file.size > maxBytes) { uploadMessage('请选择不超过 20 MB 的有效图片。', true); return; }
+    uploadMessage('正在读取图片…');
+    try {
+      const preview = await readImage(file); if (version !== selectionVersion) return;
+      selectedFile = file; uploaded = {...preview, title: file.name, status: 'selected', predictions: []}; active = -1;
+      uploadMessage('已选择“' + file.name + '”，点击“识别形状”开始。'); render();
+    } catch (error) { if (version === selectionVersion) uploadMessage(error.message, true); }
+    if (version === selectionVersion) updateControls();
+  });
+  el('recognize').addEventListener('click', async () => {
+    if (busy || !selectedFile || !uploaded) return;
+    busy = true; uploaded = {...uploaded, status: 'working', predictions: []}; active = -1;
+    updateControls(); render(); uploadMessage('本机模型正在识别，请稍候…');
+    try {
+      const response = await fetch('/api/predict?confidence=' + el('confidence').value, {
+        method: 'POST', headers: {'Content-Type': 'application/octet-stream', 'X-Filename': encodeURIComponent(selectedFile.name)},
+        body: selectedFile, signal: AbortSignal.timeout(120000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || '识别失败，请重试。');
+      if (result.model_sha256 !== data.model_sha256) throw new Error('模型版本发生变化，请刷新页面。');
+      uploaded = {...result, status: 'done'};
+      uploadMessage(result.predictions.length ? '识别完成。请对照原图查看类别和轮廓，低置信度结果需要核实。' : '本次未检出物块。可以换一张更清晰的图片，或降低最低置信度后重试。');
+    } catch (error) {
+      uploaded = {...uploaded, status: 'error', predictions: []};
+      if (error instanceof TypeError || error.name === 'TimeoutError') {
+        connected = false; el('reconnect').hidden = false;
+        uploadMessage('识别连接中断或超时。请检查启动窗口是否仍在运行，再点“重新连接模型”。', true);
+      } else uploadMessage(error.message, true);
+    } finally { busy = false; updateControls(); render(); }
+  });
+  el('confidence').addEventListener('input', () => {
+    el('confidence-value').textContent = Number(el('confidence').value).toFixed(2);
+    if (uploaded && !busy) { uploaded = {...uploaded, status: 'selected', predictions: []}; uploadMessage('置信度已调整，请点击“识别形状”重新计算。'); render(); }
+  });
+  el('show-upload').addEventListener('click', () => { if (uploaded) { active = -1; render(); } });
+  el('reconnect').addEventListener('click', connect);
   data.cases.forEach((item, index) => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'case-button';
     button.textContent = String(index + 1).padStart(2, '0') + '  ' + item.title;
@@ -161,6 +288,7 @@
   el('selection').textContent = data.selection;
   el('provenance').textContent = '结果生成：' + data.generated_at + '；输入 ' + data.settings.imgsz + '；Ultralytics ' + data.ultralytics + '；模型 SHA-256：' + data.model_sha256;
   render();
+  connect();
 </script>
 </body>
 </html>

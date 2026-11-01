@@ -8,9 +8,9 @@ if not exist "%SORTING_DEMO_PYTHON%" (
   pause
   exit /b 1
 )
-"%SORTING_DEMO_PYTHON%" "%~dp0vision\scripts\predict_stl_demo.py" %*
+"%SORTING_DEMO_PYTHON%" "%~dp0vision\scripts\serve_stl_demo.py" %*
 if errorlevel 1 (
-  echo Demo inference failed. The saved demo is still available in docs\stl_shape_v1_demo\index.html.
+  echo Demo server stopped with an error. The saved demo is still available in docs\stl_shape_v1_demo\index.html.
   pause
   exit /b 1
 )

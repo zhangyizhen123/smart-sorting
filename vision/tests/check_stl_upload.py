@@ -1,0 +1,161 @@
+"""Exercise user image import against the live local model and browser UI."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+
+from PIL import Image
+from playwright.sync_api import expect, sync_playwright
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def png_bytes(image: Image.Image) -> bytes:
+    output = io.BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--url", default="http://127.0.0.1:8765")
+    parser.add_argument("--browser-exe", type=Path)
+    args = parser.parse_args()
+    url = args.url.rstrip("/")
+    audit_dir = ROOT / "runs/task_audit"
+    audit_dir.mkdir(parents=True, exist_ok=True)
+    fixture = ROOT / "docs/stl_shape_v1_demo/samples/scene000000__frame000.jpg"
+    with Image.open(fixture) as source:
+        base = source.convert("RGB")
+    landscape = Image.new("RGB", (640, 360), (224, 225, 219))
+    landscape.paste(base, (160, 20))
+    portrait = Image.new("RGB", (320, 640), (224, 225, 219))
+    portrait.paste(base, (0, 160))
+    images = [
+        ("圆柱样例.jpg", fixture.read_bytes(), (320, 320)),
+        ("横向测试.png", png_bytes(landscape), (640, 360)),
+        ("竖向测试.png", png_bytes(portrait), (320, 640)),
+    ]
+    errors = []
+    cases_checked = []
+    with sync_playwright() as playwright:
+        options = {"headless": True}
+        if args.browser_exe:
+            options["executable_path"] = str(args.browser_exe)
+        elif os.name == "nt":
+            options["channel"] = "msedge"
+        browser = playwright.chromium.launch(**options)
+        try:
+            context = browser.new_context(viewport={"width": 1440, "height": 1100})
+            page = context.new_page()
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            health = context.request.get(url + "/api/health", timeout=60000).json()
+            assert health["ready"]
+            assert health["model_sha256"] == hashlib.sha256((ROOT / "models/trained/stl_shape_v1/best.pt").read_bytes()).hexdigest()
+            page.goto(url, wait_until="load")
+            expect(page.locator("#mode-badge")).to_contain_text("本机模型已就绪", timeout=15000)
+            expect(page.get_by_label("选择图片", exact=True)).to_be_enabled()
+
+            for name, content, (width, height) in images:
+                page.get_by_label("选择图片", exact=True).set_input_files({"name": name, "mimeType": "image/jpeg" if name.endswith("jpg") else "image/png", "buffer": content})
+                expect(page.locator("#case-title")).to_contain_text(name)
+                expect(page.locator("#prediction-overlay polygon")).to_have_count(0)
+                expect(page.get_by_label("显示参考轮廓")).to_be_disabled()
+                with page.expect_response(lambda response: "/api/predict?" in response.url, timeout=60000) as pending:
+                    page.get_by_role("button", name="识别形状", exact=True).click()
+                response = pending.value
+                assert response.status == 200, response.text()
+                result = response.json()
+                assert (result["width"], result["height"]) == (width, height)
+                assert result["model_sha256"] == health["model_sha256"]
+                expect(page.locator("#case-status")).to_contain_text("本机实时预测", timeout=15000)
+                expect(page.locator("#prediction-list li")).to_have_count(max(1, len(result["predictions"])))
+                assert page.locator("#original").evaluate("image => [image.naturalWidth, image.naturalHeight]") == [width, height]
+                stage = page.locator(".stage").first.bounding_box()
+                assert abs(stage["width"] / stage["height"] - width / height) < 0.01
+                for position, prediction in enumerate(result["predictions"]):
+                    expect(page.locator("#prediction-list li").nth(position)).to_contain_text(health["chinese_names"][prediction["class_id"]])
+                    points = page.locator("#prediction-overlay polygon").nth(position).get_attribute("points")
+                    actual = [[float(value) for value in pair.split(",")] for pair in points.split()]
+                    assert len(actual) == len(prediction["polygon"])
+                    assert all(abs(x - nx * 320) < 1e-4 and abs(y - ny * 320 * height / width) < 1e-4 for (x, y), (nx, ny) in zip(actual, prediction["polygon"], strict=True))
+                if name.endswith("jpg"):
+                    assert any(item["class_id"] == 0 for item in result["predictions"]), "A known cylinder must be inferred, not replaced by an unrelated saved sample"
+                page.locator(".case-button").nth(8).click()
+                expect(page.get_by_label("显示参考轮廓")).to_be_enabled()
+                page.get_by_role("button", name="查看导入图片").click()
+                expect(page.locator("#case-title")).to_contain_text(name)
+                if width > height:
+                    page.screenshot(path=str(audit_dir / "stl_upload_desktop.png"), full_page=True)
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                    page.screenshot(path=str(audit_dir / "stl_upload_mobile.png"), full_page=True)
+                    page.set_viewport_size({"width": 1440, "height": 1100})
+                cases_checked.append({"name": name, "size": [width, height], "predictions": len(result["predictions"])})
+
+            # Changing the threshold must clear stale results and run actual inference again.
+            page.locator("#confidence").focus()
+            page.locator("#confidence").press("End")
+            expect(page.locator("#confidence-value")).to_have_text("0.95")
+            expect(page.locator("#prediction-overlay polygon")).to_have_count(0)
+            page.get_by_label("选择图片", exact=True).set_input_files({"name": "空白.png", "mimeType": "image/png", "buffer": png_bytes(Image.new("RGB", (320, 320), "white"))})
+            with page.expect_response(lambda response: "/api/predict?" in response.url, timeout=60000) as pending:
+                page.get_by_role("button", name="识别形状", exact=True).click()
+            assert pending.value.json()["predictions"] == []
+            expect(page.locator("#upload-status")).to_contain_text("未检出物块")
+            expect(page.locator("#prediction-list")).to_contain_text("未检出")
+
+            # Invalid files must remove the previous image's detections and allow a new selection.
+            page.get_by_label("选择图片", exact=True).set_input_files({"name": "坏图.png", "mimeType": "image/png", "buffer": b"invalid image"})
+            expect(page.locator("#upload-status")).to_contain_text("无法读取")
+            expect(page.get_by_role("button", name="识别形状", exact=True)).to_be_disabled()
+            page.get_by_label("选择图片", exact=True).set_input_files({"name": "恢复.jpg", "mimeType": "image/jpeg", "buffer": fixture.read_bytes()})
+            expect(page.get_by_role("button", name="识别形状", exact=True)).to_be_enabled()
+
+            headers = {"Content-Type": "application/octet-stream"}
+            response = context.request.post(url + "/api/predict", data=b"not an image", headers=headers)
+            assert response.status == 422 and "error" in response.json()
+            response = context.request.post(url + "/api/predict?confidence=nan", data=fixture.read_bytes(), headers=headers)
+            assert response.status == 400
+            response = context.request.post(url + "/api/predict", data=fixture.read_bytes(), headers={**headers, "Origin": "https://unrelated.example"})
+            assert response.status == 403
+            assert context.request.get(url + "/AGENTS.md").status == 404
+
+            # Phone orientation and large originals are normalized before both inference and display.
+            rotated = landscape.transpose(Image.Transpose.ROTATE_90)
+            exif = Image.Exif(); exif[274] = 6
+            encoded = io.BytesIO(); rotated.save(encoded, format="JPEG", exif=exif)
+            oriented = context.request.post(url + "/api/predict", data=encoded.getvalue(), headers=headers, timeout=60000).json()
+            assert (oriented["width"], oriented["height"]) == (640, 360)
+            large = context.request.post(url + "/api/predict", data=png_bytes(landscape.resize((2400, 1350))), headers=headers, timeout=60000).json()
+            assert (large["width"], large["height"]) == (1600, 900)
+            assert (large["original_width"], large["original_height"]) == (2400, 1350)
+            assert not errors, errors
+        finally:
+            browser.close()
+    audit = {
+        "checked_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "model_sha256": health["model_sha256"],
+        "cases": cases_checked,
+        "real_model_inference": True,
+        "non_square_mask_alignment": True,
+        "sample_and_import_navigation": True,
+        "threshold_clears_old_result": True,
+        "empty_result_and_bad_file_recovery": True,
+        "exif_orientation_and_large_image_resize": True,
+        "request_validation": True,
+        "browser_errors": errors,
+    }
+    (audit_dir / "2026-11-01_stl_upload.json").write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    print(json.dumps(audit, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

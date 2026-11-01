@@ -29,6 +29,7 @@ NAMES = [
 ]
 CHINESE_NAMES = ["圆柱体", "正方体", "长方体", "三棱柱", "五棱柱", "六棱柱", "圆锥", "四面体", "球体"]
 SELECTION = "每类取实例数最少、场景编号最小的测试图；再取尚未选中的两件、三件、四件场景各一张。选取不使用预测结果。"
+PREDICTION_SETTINGS = {"imgsz": 320, "conf": 0.25, "iou": 0.7, "device": "cpu", "agnostic_nms": False, "retina_masks": True}
 
 
 def digest(path: Path) -> str:
@@ -109,6 +110,52 @@ def load_truth(path: Path) -> list[dict]:
     return objects
 
 
+def load_model() -> YOLO:
+    model = YOLO(str(MODEL))
+    if model.task != "segment" or [model.names[i] for i in range(len(model.names))] != NAMES:
+        raise ValueError("The model is not the expected nine-class segmentation model")
+    return model
+
+
+def serialize_predictions(result) -> list[dict]:
+    boxes, masks = result.boxes, result.masks
+    if boxes is None or not len(boxes):
+        return []
+    if masks is None or len(boxes) != len(masks):
+        raise ValueError("Missing instance masks")
+    return [
+        {
+            "class_id": int(class_id),
+            "confidence": round(float(confidence), 6),
+            "box": [round(float(value), 6) for value in box],
+            "polygon": [[round(float(x), 6), round(float(y), 6)] for x, y in polygon],
+        }
+        for class_id, confidence, box, polygon in zip(
+            boxes.cls.cpu().tolist(), boxes.conf.cpu().tolist(), boxes.xyxyn.cpu().tolist(), masks.xyn, strict=True,
+        )
+    ]
+
+
+def render_demo(payload: dict) -> str:
+    cases = []
+    for case in payload["cases"]:
+        image_path = DEMO / case["image"]
+        if digest(image_path) != case["image_sha256"]:
+            raise ValueError(f"Bundled image changed: {case['id']}")
+        encoded = base64.b64encode(image_path.read_bytes()).decode("ascii")
+        cases.append({**case, "image_data": f"data:image/jpeg;base64,{encoded}"})
+    embedded = json.dumps({**payload, "cases": cases}, ensure_ascii=False).replace("<", "\\u003c")
+    return TEMPLATE.read_text(encoding="utf-8").replace("__DEMO_DATA__", embedded)
+
+
+def write_demo_page(payload: dict, open_page: bool) -> None:
+    output = DEMO / "index.html"
+    output.write_text(render_demo(payload), encoding="utf-8", newline="\n")
+    print(f"Wrote {output}")
+    if open_page:
+        webbrowser.open(output.as_uri())
+
+
 def build_demo(open_page: bool) -> dict:
     manifest = json.loads((DEMO / "samples.json").read_text(encoding="utf-8"))
     metrics = json.loads(METRICS.read_text(encoding="utf-8"))
@@ -122,10 +169,8 @@ def build_demo(open_page: bool) -> dict:
             if digest(DEMO / case[kind]) != case[f"{kind}_sha256"]:
                 raise ValueError(f"Bundled {kind} changed: {case['id']}")
 
-    model = YOLO(str(MODEL))
-    if model.task != "segment" or [model.names[i] for i in range(len(model.names))] != NAMES:
-        raise ValueError("The model is not the expected nine-class segmentation model")
-    settings = {"imgsz": 320, "conf": 0.25, "iou": 0.7, "device": "cpu", "agnostic_nms": False, "retina_masks": True}
+    model = load_model()
+    settings = dict(PREDICTION_SETTINGS)
     start = time.perf_counter()
     results = model.predict(
         source=[str(DEMO / case["image"]) for case in manifest["cases"]],
@@ -138,21 +183,7 @@ def build_demo(open_page: bool) -> dict:
         truth = load_truth(DEMO / expected["label"])
         if len(truth) != expected["instances"]:
             raise ValueError("Sample instance count disagrees with labels")
-        boxes = result.boxes
-        masks = result.masks
-        if boxes is not None and len(boxes) and (masks is None or len(boxes) != len(masks)):
-            raise ValueError("Missing instance masks")
-        predictions = []
-        if boxes is not None and len(boxes):
-            for class_id, confidence, box, polygon in zip(
-                boxes.cls.cpu().tolist(), boxes.conf.cpu().tolist(), boxes.xyxyn.cpu().tolist(), masks.xyn, strict=True,
-            ):
-                predictions.append({
-                    "class_id": int(class_id),
-                    "confidence": round(float(confidence), 6),
-                    "box": [round(float(value), 6) for value in box],
-                    "polygon": [[round(float(x), 6), round(float(y), 6)] for x, y in polygon],
-                })
+        predictions = serialize_predictions(result)
         image_path = DEMO / expected["image"]
         with Image.open(image_path) as source:
             width, height = source.size
@@ -171,27 +202,24 @@ def build_demo(open_page: bool) -> dict:
         "cases": cases,
     }
     (DEMO / "predictions.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-    for case in cases:
-        encoded = base64.b64encode((DEMO / case["image"]).read_bytes()).decode("ascii")
-        case["image_data"] = f"data:image/jpeg;base64,{encoded}"
-    embedded = json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
-    page = TEMPLATE.read_text(encoding="utf-8").replace("__DEMO_DATA__", embedded)
-    output = DEMO / "index.html"
-    output.write_text(page, encoding="utf-8", newline="\n")
-    print(f"Ran {len(cases)} examples using {MODEL.name}; wrote {output}")
-    if open_page:
-        webbrowser.open(output.as_uri())
+    write_demo_page(payload, open_page)
+    print(f"Ran {len(cases)} examples using {MODEL.name}")
     return payload
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--prepare-samples", action="store_true", help="Bundle fixed examples from the local held-out dataset")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--prepare-samples", action="store_true", help="Bundle fixed examples from the local held-out dataset")
+    mode.add_argument("--render-only", action="store_true", help="Update the page using the existing predictions")
     parser.add_argument("--no-open", action="store_true", help="Regenerate without opening a browser")
     args = parser.parse_args()
     if args.prepare_samples:
         prepare_samples()
-    build_demo(open_page=not args.no_open)
+    if args.render_only:
+        write_demo_page(json.loads((DEMO / "predictions.json").read_text(encoding="utf-8")), open_page=not args.no_open)
+    else:
+        build_demo(open_page=not args.no_open)
 
 
 if __name__ == "__main__":

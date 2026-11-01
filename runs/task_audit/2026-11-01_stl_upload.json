@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-11-01T00:59:53-07:00",
+  "model_sha256": "5c7dd29d84c0b71b3110ca0da0f101210648e85b7e9badded00c2ab09f3b057e",
+  "cases": [
+    {
+      "name": "圆柱样例.jpg",
+      "size": [
+        320,
+        320
+      ],
+      "predictions": 1
+    },
+    {
+      "name": "横向测试.png",
+      "size": [
+        640,
+        360
+      ],
+      "predictions": 1
+    },
+    {
+      "name": "竖向测试.png",
+      "size": [
+        320,
+        640
+      ],
+      "predictions": 1
+    }
+  ],
+  "real_model_inference": true,
+  "non_square_mask_alignment": true,
+  "sample_and_import_navigation": true,
+  "threshold_clears_old_result": true,
+  "empty_result_and_bad_file_recovery": true,
+  "exif_orientation_and_large_image_resize": true,
+  "request_validation": true,
+  "browser_errors": []
+}

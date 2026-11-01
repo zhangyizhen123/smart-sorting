@@ -35,7 +35,7 @@
 
 每类固定取实例数最少、场景编号最小的一张测试图，再加入两件、三件、四件场景各一张，不按预测是否正确挑图。图上编号对应下方中文类别和置信度，重复框和误识别完整保留。拼图与 [中文演示页面](stl_shape_v1_demo/index.html) 使用同一份模型输出；12 张展示样例不替代上面的完整测试集指标。
 
-页面可离线打开并切换原图、参考轮廓与预测轮廓；现场操作见 [老师演示操作说明](老师演示操作说明.md)。
+页面可离线打开并切换原图、参考轮廓与预测轮廓。双击项目根目录 `演示模型.cmd` 后，还可以导入自己的图片，由本机模型实际识别形状；现场操作见 [老师演示操作说明](老师演示操作说明.md)。
 
 ![九类 STL 合成测试集预测拼图](视觉训练首版预测拼图.jpg)
 
@@ -56,5 +56,6 @@
 - 完整测试集预测：`runs/segment/stl_shape_v1_test_verified_predictions/`
 - 重新评估：`python vision/scripts/evaluate_stl_test.py --model models/trained/stl_shape_v1/best.pt`
 - 重新生成拼图：`python vision/scripts/make_stl_prediction_montage.py`
-- 重新运行 12 张演示图：双击项目根目录 `演示模型.cmd`，或执行 `.venv-vision/Scripts/python.exe vision/scripts/predict_stl_demo.py`
+- 导入自选图片识别：双击项目根目录 `演示模型.cmd`，在本机页面选图并点击“识别形状”
+- 重新计算 12 张预置演示图：`.venv-vision/Scripts/python.exe vision/scripts/predict_stl_demo.py --no-open`
 - 演示样例与输出：`docs/stl_shape_v1_demo/`；`index.html` 可单文件复制，`predictions.json` 保存实际掩膜和类别
