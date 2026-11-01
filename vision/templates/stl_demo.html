@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>智能分拣 · 九类形状模型演示</title>
+  <style>
+    :root { color-scheme: light; --ink: #172b3d; --muted: #536679; --teal: #106a68; --line: #dce4e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f6f7; color: var(--ink); font: 16px/1.6 "Microsoft YaHei", "PingFang SC", sans-serif; }
+    main { max-width: 1420px; margin: auto; padding: 30px 36px 42px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(25px, 3vw, 38px); line-height: 1.3; margin-bottom: 10px; }
+    h2 { font-size: 20px; margin-bottom: 12px; }
+    h3 { font-size: 16px; margin-bottom: 7px; }
+    p { margin-bottom: 10px; }
+    header { display: flex; justify-content: space-between; gap: 22px; align-items: start; margin-bottom: 22px; }
+    .eyebrow { color: var(--teal); font-size: 13px; letter-spacing: .12em; margin-bottom: 6px; }
+    .muted { color: var(--muted); }
+    .badge { background: #e2efeb; color: #216454; font-size: 13px; padding: 7px 12px; border-radius: 20px; white-space: nowrap; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .metric { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+    .metric b { display: block; font-size: 28px; font-variant-numeric: tabular-nums; }
+    .metric span { font-size: 13px; color: var(--muted); }
+    .notice { border-left: 4px solid #b57a2e; background: #fff4e4; padding: 12px 16px; border-radius: 4px; margin-bottom: 22px; font-size: 14px; }
+    .workspace { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 18px; }
+    nav { display: flex; flex-direction: column; gap: 7px; }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; border: 1px solid var(--line); background: white; color: var(--ink); border-radius: 7px; padding: 9px 12px; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #70aea9; outline-offset: 2px; }
+    .case-button { text-align: left; font-size: 14px; }
+    .case-button[aria-pressed="true"] { background: var(--teal); color: white; border-color: var(--teal); }
+    .viewer { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
+    .toolbar { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
+    .toolbar h2 { margin: 0; }
+    .toggles { display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap; }
+    label { cursor: pointer; }
+    input { accent-color: var(--teal); }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .stage { position: relative; width: 100%; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #ecf0f1; }
+    .stage img, .stage svg { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
+    .stage svg { pointer-events: none; }
+    .object-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 7px; }
+    .object-list li { display: flex; gap: 9px; align-items: center; font-size: 14px; }
+    .chip { min-width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; background: var(--chip); color: white; font-weight: 700; font-size: 12px; }
+    .small { font-size: 12px; }
+    .case-status { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .below { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
+    .below section { padding: 18px 20px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .below p { font-size: 14px; }
+    details { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    details p { overflow-wrap: anywhere; margin: 8px 0 0; }
+    summary { cursor: pointer; }
+    @media (max-width: 850px) {
+      main { padding: 20px 16px; } header { flex-direction: column; gap: 6px; }
+      .workspace { grid-template-columns: 1fr; } nav { display: grid; grid-template-columns: repeat(3, 1fr); }
+      .metrics { grid-template-columns: 1fr 1fr; } .below { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 530px) { .comparison { grid-template-columns: 1fr; } .viewer { padding: 14px; } }
+    @media print { main { padding: 0; } nav, .toggles { display: none; } .workspace { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="eyebrow">智能分拣 / 阶段成果</p><h1>九类形状模型 · 看见每一个物块</h1><p class="muted">从 STL 建模文件自动生成图像和轮廓标注，训练形状识别与实例分割模型。</p></div>
+    <span class="badge">合成数据演示 · 已保存的推理结果</span>
+  </header>
+  <section class="metrics" aria-label="完整合成测试集指标">
+    <div class="metric"><b>9 类</b><span>几何形状 · YOLO11n-seg</span></div>
+    <div class="metric"><b id="test-count"></b><span>独立合成测试图 / 不只这 12 个样例</span></div>
+    <div class="metric"><b id="map50"></b><span>掩膜 mAP50</span></div>
+    <div class="metric"><b id="map5095"></b><span>掩膜 mAP50–95 · 更严格的轮廓指标</span></div>
+  </section>
+  <p class="notice">目前展示的是合成图像识别，不能代表真实物块效果。正方体与长方体仍容易混淆；颜色、抓取坐标和 MaixCAM 2 部署尚未验证。</p>
+  <div class="workspace">
+    <nav id="cases" aria-label="选择演示样例"></nav>
+    <section class="viewer" aria-label="样例对照">
+      <div class="toolbar"><h2 id="case-title"></h2><div class="toggles">
+        <label><input id="show-truth" type="checkbox"> 显示参考轮廓</label>
+        <label><input id="show-mask" type="checkbox" checked> 显示预测轮廓</label>
+        <label><input id="show-box" type="checkbox" checked> 显示预测框</label>
+      </div></div>
+      <div class="comparison">
+        <div><h3>输入图像</h3><div class="stage"><img id="original" alt="输入的合成测试图"><svg id="truth-overlay" viewBox="0 0 320 320" aria-hidden="true"></svg></div><ul id="truth-list" class="object-list" aria-label="标注中的物块"></ul></div>
+        <div><h3>模型预测</h3><div class="stage"><img id="predicted" alt="模型预测的底图"><svg id="prediction-overlay" viewBox="0 0 320 320" aria-hidden="true"></svg></div><ul id="prediction-list" class="object-list" aria-label="模型输出的全部物块"></ul></div>
+      </div>
+      <p class="case-status" id="case-status" aria-live="polite"></p>
+    </section>
+  </div>
+  <div class="below">
+    <section><h2>已经做成了什么</h2><p>九个 STL → 1,080 张合成图及自动标注 → 864 / 108 / 108 张训练、验证、测试图 → 20 轮训练 → 独立测试评估。</p><p>图上编号对应下方列表，轮廓、类别和置信度来自同一次模型输出。重复框和误识别完整保留。</p></section>
+    <section><h2>接下来怎样落到实物上</h2><p>取得托盘与物块，用最终固定相机采集真实图像，再做预标注、人工复核、微调和独立实拍测试。</p><p>这页可以离线打开。现场重新运行模型：双击项目根目录的「演示模型.cmd」，等待生成结果后会自动打开本页。</p></section>
+  </div>
+  <details><summary>样例选取、推理参数与结果来源</summary><p id="selection"></p><p id="provenance"></p><p>置信度表示模型对某个预测的信心，不是实物识别准确率。页面切换显示已计算结果；完整测试指标使用独立评估流程，演示显示阈值不会修改它们。</p></details>
+</main>
+<script id="demo-data" type="application/json">__DEMO_DATA__</script>
+<script>
+  const data = JSON.parse(document.getElementById('demo-data').textContent);
+  const colors = ['#205baa', '#9a3d78', '#887000', '#076f64', '#a3471b', '#624ca3', '#455e72', '#0877a0'];
+  const ns = 'http://www.w3.org/2000/svg';
+  let active = 0;
+  const el = id => document.getElementById(id);
+  function shape(tag, attrs) { const element = document.createElementNS(ns, tag); for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, value); return element; }
+  function markerPosition(svg, x1, y1) {
+    const previous = Array.from(svg.querySelectorAll('[data-marker]')).map(node => [Number(node.getAttribute('x')), Number(node.getAttribute('y'))]);
+    for (let row = 0; row < 14; row++) {
+      for (const offset of [0, 24, -24, 48, -48, 72, -72, 96, -96, 120, -120]) {
+        const x = Math.min(297, Math.max(1, x1 + offset));
+        const y = Math.min(297, Math.max(1, y1 - 24 + row * 24));
+        if (previous.every(([px, py]) => Math.abs(x - px) >= 23 || Math.abs(y - py) >= 23)) return [x, y];
+      }
+    }
+    return [1, 1];
+  }
+  function addOutline(svg, item, index, showMask, showBox) {
+    const color = colors[index % colors.length];
+    const points = item.polygon.map(([x, y]) => [x * 320, y * 320]);
+    if (showMask && points.length) svg.appendChild(shape('polygon', {points: points.map(p => p.join(',')).join(' '), fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    let box = item.box;
+    if (!box) { const xs = points.map(p => p[0] / 320), ys = points.map(p => p[1] / 320); box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
+    const [x1, y1, x2, y2] = box.map(v => v * 320);
+    if (showBox) svg.appendChild(shape('rect', {x: x1, y: y1, width: x2 - x1, height: y2 - y1, fill: 'none', stroke: color, 'stroke-width': 1.8}));
+    if (showMask || showBox) {
+      const [x, y] = markerPosition(svg, x1, y1);
+      svg.appendChild(shape('rect', {x, y, width: 21, height: 21, rx: 4, fill: color, 'data-marker': 'true'}));
+      const text = shape('text', {x: x + 10.5, y: y + 15, fill: 'white', 'font-size': 13, 'font-weight': 'bold', 'text-anchor': 'middle'});
+      text.textContent = index + 1; svg.appendChild(text);
+    }
+  }
+  function list(id, objects, confidence) {
+    const target = el(id); target.replaceChildren();
+    objects.forEach((item, index) => {
+      const row = document.createElement('li'), chip = document.createElement('span'), label = document.createElement('span');
+      chip.className = 'chip'; chip.style.setProperty('--chip', colors[index % colors.length]); chip.textContent = index + 1;
+      label.textContent = data.chinese_names[item.class_id] + ' · ' + data.names[item.class_id] + (confidence ? ' · ' + (item.confidence * 100).toFixed(1) + '%' : ' · 标注');
+      row.append(chip, label); target.appendChild(row);
+    });
+    if (!objects.length) { const row = document.createElement('li'); row.textContent = '未检出超过显示阈值的物块'; target.appendChild(row); }
+  }
+  function render() {
+    const current = data.cases[active];
+    el('case-title').textContent = String(active + 1).padStart(2, '0') + ' / ' + current.title;
+    el('original').src = current.image_data; el('predicted').src = current.image_data;
+    el('truth-overlay').replaceChildren(); el('prediction-overlay').replaceChildren();
+    if (el('show-truth').checked) current.truth.forEach((item, index) => addOutline(el('truth-overlay'), item, index, true, false));
+    current.predictions.forEach((item, index) => addOutline(el('prediction-overlay'), item, index, el('show-mask').checked, el('show-box').checked));
+    list('truth-list', current.truth, false); list('prediction-list', current.predictions, true);
+    el('case-status').textContent = '标注 ' + current.truth.length + ' 件 / 预测 ' + current.predictions.length + ' 个 · 显示置信度 ≥ ' + data.settings.conf + ' · ' + current.id + '（测试集）。预测数量相同也不代表类别全部正确。';
+    document.querySelectorAll('.case-button').forEach((button, index) => button.setAttribute('aria-pressed', index === active ? 'true' : 'false'));
+  }
+  data.cases.forEach((item, index) => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'case-button';
+    button.textContent = String(index + 1).padStart(2, '0') + '  ' + item.title;
+    button.addEventListener('click', () => { active = index; render(); }); el('cases').appendChild(button);
+  });
+  ['show-truth', 'show-mask', 'show-box'].forEach(id => el(id).addEventListener('change', render));
+  el('test-count').textContent = data.evaluation.image_count + ' 张';
+  el('map50').textContent = data.evaluation.mask.mAP50.toFixed(3);
+  el('map5095').textContent = data.evaluation.mask.mAP50_95.toFixed(3);
+  el('selection').textContent = data.selection;
+  el('provenance').textContent = '结果生成：' + data.generated_at + '；输入 ' + data.settings.imgsz + '；Ultralytics ' + data.ultralytics + '；模型 SHA-256：' + data.model_sha256;
+  render();
+</script>
+</body>
+</html>

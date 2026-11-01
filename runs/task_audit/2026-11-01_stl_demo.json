@@ -1,0 +1,15 @@
+{
+  "checked_at": "2026-11-01T00:43:08-07:00",
+  "model_sha256": "5c7dd29d84c0b71b3110ca0da0f101210648e85b7e9badded00c2ab09f3b057e",
+  "demo_html_sha256": "3b9849e3aed633dd86bacf52ced59ad76b4a2124796bcaee4b4ab43a3f5854f9",
+  "predictions_sha256": "15a320a9bc11257ae75f8f5b30865087cc5831cdc333cc58c6f8d9bac8be2894",
+  "cases_checked": 12,
+  "classes_covered": 9,
+  "copied_single_html_works_offline": true,
+  "all_case_navigation_and_overlay_toggles_passed": true,
+  "displayed_masks_and_classes_match_saved_inference": true,
+  "horizontal_overflow": false,
+  "prediction_number_overlap": false,
+  "external_http_requests": [],
+  "browser_errors": []
+}

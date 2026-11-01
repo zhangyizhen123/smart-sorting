@@ -1,0 +1,154 @@
+{
+  "selection": "每类取实例数最少、场景编号最小的测试图；再取尚未选中的两件、三件、四件场景各一张。选取不使用预测结果。",
+  "source_manifest_sha256": "6bd33f539b2d265fe29fbc9d4680cf1bea530eaec4aab4469e5fd04ae160597f",
+  "split_audit": {
+    "scene_overlap": 0,
+    "exact_image_hash_overlap": 0,
+    "images_checked": 1080
+  },
+  "names": [
+    "cylinder",
+    "cube",
+    "cuboid",
+    "tri_prism",
+    "pent_prism",
+    "hex_prism",
+    "cone",
+    "tetrahedron",
+    "sphere"
+  ],
+  "cases": [
+    {
+      "id": "scene000000",
+      "title": "圆柱体",
+      "target_class": "cylinder",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000000__frame000.jpg",
+      "label": "samples/scene000000__frame000.txt",
+      "image_sha256": "989acaadfcffa7ed750b382c7d1b6043d3e46c61011173ce13cff0bda5f5ab54",
+      "label_sha256": "2085138009823edf85e52383339d711106baf555d5eba040cc87a1077b6990cd"
+    },
+    {
+      "id": "scene000178",
+      "title": "正方体",
+      "target_class": "cube",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000178__frame000.jpg",
+      "label": "samples/scene000178__frame000.txt",
+      "image_sha256": "5d318841fbe813c148ff444d236f3da37f546f02df206f54795ca58f453e5dd1",
+      "label_sha256": "7d75fa57af1d6664f83c580b0fc3cda4cacbf595f199ce2232c8d7050e78667c"
+    },
+    {
+      "id": "scene000269",
+      "title": "长方体",
+      "target_class": "cuboid",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000269__frame000.jpg",
+      "label": "samples/scene000269__frame000.txt",
+      "image_sha256": "261d9998c665bb2bec1af6ffed537ba494ee987b2f381200e0966479859be41d",
+      "label_sha256": "e32315872b331436038d441ba4a9c72b26e96344d6782bcc6ca60f9817ae0a99"
+    },
+    {
+      "id": "scene000408",
+      "title": "三棱柱",
+      "target_class": "tri_prism",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000408__frame000.jpg",
+      "label": "samples/scene000408__frame000.txt",
+      "image_sha256": "d7b081e92b4ba415c1b32b40e4066dad070b1454fa45e89872391eb109570354",
+      "label_sha256": "17c2338a1aeec6fbc521899b05dfc99b9eecbef783b52acd096c60aacd97db52"
+    },
+    {
+      "id": "scene000500",
+      "title": "五棱柱",
+      "target_class": "pent_prism",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000500__frame000.jpg",
+      "label": "samples/scene000500__frame000.txt",
+      "image_sha256": "ece893de231e4ccc5165c562b6466f47239fe0ebe693ad0142854d17de1a82d5",
+      "label_sha256": "75ac9c77f2713c15bd2b4ffb2c07f0fd929d0cc33e9e5488db38d037fc4636be"
+    },
+    {
+      "id": "scene000687",
+      "title": "六棱柱",
+      "target_class": "hex_prism",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000687__frame000.jpg",
+      "label": "samples/scene000687__frame000.txt",
+      "image_sha256": "fa8948d4debae713005a38cc9745bd57e74870f2ca4d3afd107f7af8ed63de49",
+      "label_sha256": "cbe9ef93f89a5522c6918e5997c2a347755bdc5bfceb9e4027fab91257b48de1"
+    },
+    {
+      "id": "scene000824",
+      "title": "圆锥",
+      "target_class": "cone",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000824__frame000.jpg",
+      "label": "samples/scene000824__frame000.txt",
+      "image_sha256": "c7f40ecda2f7f927961ea14e719b3792fbc53548c7192eae18205ba0d7fb469f",
+      "label_sha256": "d0b47e9284c4a9decdd8df3dedbcdd9f70d46900674a8419e4acbd9642b10daa"
+    },
+    {
+      "id": "scene000853",
+      "title": "四面体",
+      "target_class": "tetrahedron",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000853__frame000.jpg",
+      "label": "samples/scene000853__frame000.txt",
+      "image_sha256": "07453d342afb393b53ec61e86e7da732a6398dabd7d1c28910e63a0ccdb627ce",
+      "label_sha256": "d7e47874942fe4e97ce194f5b1adac7cad2f9b3ba876a499b91fb3928cc128d1"
+    },
+    {
+      "id": "scene000981",
+      "title": "球体",
+      "target_class": "sphere",
+      "instances": 1,
+      "split": "test",
+      "image": "samples/scene000981__frame000.jpg",
+      "label": "samples/scene000981__frame000.txt",
+      "image_sha256": "024092b6062510af2c827407473ef4004704e85ad83af48fd67f61e7ac80f016",
+      "label_sha256": "de898b94c67e9977ef8a46b08df57d41f617e95216bed5d3b35f55e8ed7f6331"
+    },
+    {
+      "id": "scene000013",
+      "title": "2 个物块",
+      "target_class": "cylinder",
+      "instances": 2,
+      "split": "test",
+      "image": "samples/scene000013__frame000.jpg",
+      "label": "samples/scene000013__frame000.txt",
+      "image_sha256": "46bf47df9c725adec6b469732b8135b048a818467765f25066907598c14d0e28",
+      "label_sha256": "527245d07371c3957d8f4a57b8f77ccb13919671e61785a8e7ac25a5a68f187a"
+    },
+    {
+      "id": "scene000011",
+      "title": "3 个物块",
+      "target_class": "cylinder",
+      "instances": 3,
+      "split": "test",
+      "image": "samples/scene000011__frame000.jpg",
+      "label": "samples/scene000011__frame000.txt",
+      "image_sha256": "3f4641287f810862f16c11d971ccfabb406e666d8ed99e82c31b0cc2a899bd9d",
+      "label_sha256": "a5c9ed6265e3ac81e861ff55f39ed86e7513cd94794b148d666bfede33b350b3"
+    },
+    {
+      "id": "scene000117",
+      "title": "4 个物块",
+      "target_class": "cylinder",
+      "instances": 4,
+      "split": "test",
+      "image": "samples/scene000117__frame000.jpg",
+      "label": "samples/scene000117__frame000.txt",
+      "image_sha256": "5692090b55f9cfb95db1d7b0206a605124971a9cad799582b03ffa4af6d528a9",
+      "label_sha256": "232dbefb4d548d04d76193883799b051ef2637cf68c41ba1afdc8b7239e871fe"
+    }
+  ]
+}

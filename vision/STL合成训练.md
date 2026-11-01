@@ -68,6 +68,7 @@ python vision\scripts\train_seg.py `
 - 本轮训练曲线与配置：`runs/segment/runs/segment/stl_shape_v1/`；最佳权重已复制到上方归档路径。
 - 固定测试集评估：运行 `python vision\scripts\evaluate_stl_test.py`，指标写入 `docs/视觉训练指标_STL首版.json`，完整预测图写入 `runs/segment/stl_shape_v1_test_verified_predictions/`。
 - 老师展示用说明和拼图：`docs/视觉训练结果_STL首版.md`、`docs/视觉训练首版预测拼图.jpg`。
+- 中文离线演示：`docs/stl_shape_v1_demo/index.html`；双击项目根目录 `演示模型.cmd` 可重新预测附带样例。详细步骤见 `docs/老师演示操作说明.md`。
 - 测试集 mask mAP50 为 0.915、mAP50-95 为 0.872。主要混淆是 `cube/cuboid`；请结合逐类指标和预测图解释，不能只展示总分。
 
 合成测试集只衡量模型对这套渲染规则的拟合程度。拿到托盘、实物和最终固定相机后，要重新采集真实图像、人工抽查自动生成的掩膜、冻结独立测试集，并用实拍数据微调或重训；之后才能评估真实识别和抓取表现。

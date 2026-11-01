@@ -1,0 +1,5 @@
+# Keep bundled sample and result hashes stable across Windows/Linux checkouts.
+docs/stl_shape_v1_demo/** -text
+
+# Double-click entry points must retain Windows command-file line endings.
+*.cmd text eol=crlf

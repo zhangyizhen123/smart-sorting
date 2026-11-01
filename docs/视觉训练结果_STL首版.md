@@ -33,7 +33,9 @@
 
 ## 预测拼图
 
-每种形状各选一个测试场景，并加入三个多物块场景。画面中的类别和置信度是模型预测；下方 `MATCHED` 表示预测类别与目标相同，且预测框和标注框的 IoU 至少为 0.5。画面保留该图的全部预测，重复框和额外误检仍会显示。这个挑图标记用于展示，不替代上面的完整测试集指标。
+每类固定取实例数最少、场景编号最小的一张测试图，再加入两件、三件、四件场景各一张，不按预测是否正确挑图。图上编号对应下方中文类别和置信度，重复框和误识别完整保留。拼图与 [中文演示页面](stl_shape_v1_demo/index.html) 使用同一份模型输出；12 张展示样例不替代上面的完整测试集指标。
+
+页面可离线打开并切换原图、参考轮廓与预测轮廓；现场操作见 [老师演示操作说明](老师演示操作说明.md)。
 
 ![九类 STL 合成测试集预测拼图](视觉训练首版预测拼图.jpg)
 
@@ -54,3 +56,5 @@
 - 完整测试集预测：`runs/segment/stl_shape_v1_test_verified_predictions/`
 - 重新评估：`python vision/scripts/evaluate_stl_test.py --model models/trained/stl_shape_v1/best.pt`
 - 重新生成拼图：`python vision/scripts/make_stl_prediction_montage.py`
+- 重新运行 12 张演示图：双击项目根目录 `演示模型.cmd`，或执行 `.venv-vision/Scripts/python.exe vision/scripts/predict_stl_demo.py`
+- 演示样例与输出：`docs/stl_shape_v1_demo/`；`index.html` 可单文件复制，`predictions.json` 保存实际掩膜和类别
