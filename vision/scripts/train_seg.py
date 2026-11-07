@@ -33,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--patience", type=int, default=30)
     p.add_argument("--lr0", type=float, default=0.001)
+    p.add_argument("--warmup-epochs", type=float, default=3.0)
     p.add_argument("--hsv-h", type=float, default=0.05)
     p.add_argument("--hsv-s", type=float, default=0.5)
     p.add_argument("--hsv-v", type=float, default=0.35)
@@ -80,7 +81,7 @@ def main() -> None:
         lr0=args.lr0,
         lrf=0.01,
         cos_lr=True,
-        warmup_epochs=3.0,
+        warmup_epochs=args.warmup_epochs,
         patience=args.patience,
         amp=amp,
         close_mosaic=min(15, max(1, args.epochs // 5)),

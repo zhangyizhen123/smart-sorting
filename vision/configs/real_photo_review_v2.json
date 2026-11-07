@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "source_directory": "dataset/一些实物图",
+  "new_archive": "dataset/real/raw/batch_20261102_capture",
+  "annotation_directory": "dataset/real/annotations/review_v2",
+  "date_note": "20261102 is the camera filename/EXIF capture date, not an assertion about the workstation timezone.",
+  "confirmed_by_user": {
+    "gray_blocks": {
+      "class": "cube",
+      "nominal_dimensions_mm": [
+        40,
+        40,
+        40
+      ],
+      "dimensions_source": "models/blocks_40mm/README.md",
+      "dimensions_are_physical_measurement": false
+    },
+    "IMG_20260930_002114..jpg": {
+      "class": "tri_prism",
+      "color": "blue",
+      "object_id": "blue_tri_prism",
+      "supersedes": "Previously described as the same object as 002128; user explicitly corrected this."
+    },
+    "IMG_20260930_002128..jpg": {
+      "class": "cylinder",
+      "color": "blue",
+      "object_id": "blue_cylinder"
+    },
+    "IMG_20261101_194706..jpg": {
+      "top_left_green": "pent_prism",
+      "bottom_right_green": "hex_prism",
+      "yellow": "cylinder",
+      "white": "cube",
+      "purple": "cube",
+      "instance_count": 5
+    },
+    "IMG_20261102_002244..jpg": {
+      "left_purple": "tetrahedron",
+      "top_green_pointed": "tetrahedron",
+      "green_block_between_sphere_and_hex_prism": "cube",
+      "green_block_under_white_cube": "tri_prism",
+      "source": "User replies during execution; independent of detector predictions."
+    }
+  },
+  "new_groups": {
+    "empty_tray": [
+      "002023",
+      "002025",
+      "002026",
+      "002029",
+      "002030",
+      "002031",
+      "002032",
+      "002036",
+      "002037",
+      "002039",
+      "002057"
+    ],
+    "white_cube": [
+      "002108",
+      "002109",
+      "002111",
+      "002112",
+      "002115",
+      "002116",
+      "002117",
+      "002119",
+      "002121",
+      "002123",
+      "002125",
+      "002126"
+    ],
+    "multi_object": [
+      "002138",
+      "002140",
+      "002155",
+      "002157",
+      "002206",
+      "002207",
+      "002217",
+      "002219",
+      "002236",
+      "002238",
+      "002240",
+      "002241",
+      "002244"
+    ]
+  },
+  "annotation_policy": {
+    "visible_instances_only": true,
+    "exclude_shadows_and_tray_hole": true,
+    "new_class_id_requires_review": true,
+    "model_predictions_are_not_ground_truth": true,
+    "human_boundary_review_required": true,
+    "default_training_approved": false,
+    "final_test_eligible": false,
+    "split": "development_unassigned",
+    "shared_object_leakage_group": "real_pilot_shared_physical_objects"
+  }
+}

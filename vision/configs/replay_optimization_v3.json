@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "dataset": "dataset/replay_optimization_v3",
+  "output": "runs/segment/replay_optimization_v3",
+  "seed": 20261117,
+  "focused_train_per_class_mode": 12,
+  "real_repetitions": 4,
+  "negative_counts": {"train": 200, "val": 100},
+  "initial_model": "runs/segment/real_mixed_pilot_v1/from_v1/weights/best.pt",
+  "training": {"epochs": 6, "imgsz": 640, "batch": 4, "device": "cpu", "threads": 2, "workers": 0, "lr0": 0.0001, "lrf": 0.2, "warmup_epochs": 1.0, "patience": 6, "freeze": 10, "mask_ratio": 1},
+  "constraints": {"no_cloud_spend": true, "no_test_for_selection": true, "no_auto_deploy": true, "real_images_train_only": true},
+  "note": "First replay experiment, not final success. Freeze backbone to retain old features, use complete legacy training and balanced focused replay. Real fit is diagnostic only. Deployment requires jointly improved recognition, false positives and contour accuracy."
+}

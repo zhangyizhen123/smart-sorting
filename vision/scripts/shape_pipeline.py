@@ -38,12 +38,12 @@ class ShapePipeline:
             if not self.refiner.ready:
                 raise ValueError("Incomplete refiner")
 
-    def predict(self, image, confidence=None):
+    def predict(self, image, confidence=None, *, include_mask_geometry=False):
         settings = {**self.settings}
         if confidence is not None:
             settings["conf"] = confidence
         result = self.model.predict(source=image, verbose=False, **settings)[0]
-        predictions = serialize_predictions(result)
+        predictions = serialize_predictions(result, include_mask_geometry=include_mask_geometry)
         if self.refiner:
             for item, polygon in zip(predictions, result.masks.xy if result.masks is not None else []):
                 item["base_class_id"] = item["class_id"]

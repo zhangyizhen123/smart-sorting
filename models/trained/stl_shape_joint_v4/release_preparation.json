@@ -1,0 +1,10 @@
+{
+  "prepared_at": "2026-11-01T23:52:16.719523+00:00",
+  "candidate": "protected_consensus_v4",
+  "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed",
+  "default_activated": false,
+  "ui_check_required": true,
+  "source_pipeline_sha256": "8d4aa9caa1d9cb021cce1b8688ce1b7dfcc9154815f2f48b96c9347d6c175349",
+  "sealed_test_result_sha256": "9e22723794a01e289702d8ab8b237734c68bfc06dbaf2b968c446a7781f8debb",
+  "candidate_lock_sha256": "a32c3afdb83444528734b55373e8e1ebff4f27351ce7f747ba154fd1d2630905"
+}

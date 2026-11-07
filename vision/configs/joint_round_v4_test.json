@@ -1,0 +1,15 @@
+{
+  "output": "dataset/joint_round_v4_test",
+  "role": "sealed_test",
+  "split": "test",
+  "seed": 20270203,
+  "legacy_per_class": 200,
+  "focused_per_class": 400,
+  "negative_images": 400,
+  "exclude_manifests": [
+    "dataset/replay_optimization_v3/manifest.jsonl",
+    "dataset/focused_v2/manifest.jsonl",
+    "dataset/unseen_shape_test_v3/manifest.jsonl",
+    "dataset/joint_round_v4_development/manifest.jsonl"
+  ]
+}

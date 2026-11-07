@@ -9,3 +9,9 @@ vision/scripts/make_stl_synthetic.py text eol=lf
 
 # Double-click entry points must retain Windows command-file line endings.
 *.cmd text eol=crlf
+
+# Inference manifests validate runtime source bytes, so keep Python scripts LF.
+vision/scripts/*.py text eol=lf
+
+# Preserve the accepted release bundle's exact bytes, including mixed line endings.
+models/trained/stl_shape_joint_v4/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

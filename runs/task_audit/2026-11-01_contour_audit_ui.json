@@ -1,0 +1,18 @@
+{
+  "cases": 244,
+  "variants": 4,
+  "default_original_contours": true,
+  "original_roundtrip_exact": true,
+  "box_toggle": true,
+  "regularized_toggle": true,
+  "object_zoom": true,
+  "groups": [
+    11,
+    12,
+    15,
+    1
+  ],
+  "mobile_horizontal_overflow": false,
+  "javascript_errors": [],
+  "failed_requests": []
+}

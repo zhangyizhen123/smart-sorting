@@ -1,0 +1,24 @@
+{
+  "IMG_20261102_002109..jpg": {
+    "1": {"polygon": [[208,305],[333,263],[359,382],[244,422],[223,397],[207,330]], "reason": "Exclude tray speck and include the visible thin left face; assistant draft pending user review."}
+  },
+  "IMG_20261102_002157..jpg": {
+    "4": {"polygon": [[172,238],[230,201],[270,247],[268,289],[219,321],[184,301]], "reason": "Replace spurious lower-edge notch and include the visible cube side faces."}
+  },
+  "IMG_20261102_002217..jpg": {
+    "5": {"keep_largest_component": true, "reason": "Visually checked single sphere; remove isolated one-pixel artifact only."}
+  },
+  "IMG_20261102_002219..jpg": {
+    "5": {"polygon": [[345,257],[404,306],[366,369],[329,373],[292,340],[291,321],[296,300],[309,281]], "reason": "Include visible front and left cube faces omitted by automatic mask; do not extend behind sphere."}
+  },
+  "IMG_20261102_002236..jpg": {
+    "6": {"polygon": [[307,321],[398,337],[385,424],[295,407],[299,357],[303,337]], "reason": "Join the visible narrow left cube face into its instance; exclude background gap."}
+  },
+  "IMG_20261102_002238..jpg": {
+    "4": {"polygon": [[160,252],[201,241],[213,264],[218,284],[221,303],[232,313],[200,325],[175,314]], "reason": "Restore left side of short green cube, respecting sphere occlusion."}
+  },
+  "IMG_20261102_002241..jpg": {
+    "6": {"polygon": [[279,277.5],[356.5,288],[363,354],[338,391],[261,381],[265,352],[273,331],[275,305]], "reason": "Include narrow visible left cube face and remove fragmented edge artifacts."},
+    "7": {"polygon": [[294,251],[363,271],[357,286.5],[284.5,277]], "reason": "Only the exposed green prism is labeled; exclude the white cube in front."}
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "dataset": "dataset/real_mixed_pilot_v1",
+  "output": "runs/segment/real_mixed_pilot_v1",
+  "review": "dataset/real/annotations/review_v2",
+  "legacy_dataset": "dataset/stl_synthetic_yolo",
+  "focused_dataset": "dataset/focused_v2",
+  "seed": 42,
+  "training": {
+    "epochs": 3,
+    "imgsz": 640,
+    "batch": 4,
+    "device": "cpu",
+    "threads": 2,
+    "workers": 0,
+    "lr0": 0.0003,
+    "patience": 3,
+    "warmup_epochs": 1.0,
+    "optimizer": "AdamW",
+    "amp": false,
+    "cache": false,
+    "mosaic": 0.0,
+    "mixup": 0.0,
+    "copy_paste": 0.0,
+    "degrees": 10.0,
+    "translate": 0.05,
+    "scale": 0.2,
+    "shear": 0.0,
+    "perspective": 0.0,
+    "fliplr": 0.5,
+    "flipud": 0.0,
+    "hsv_h": 0.05,
+    "hsv_s": 0.5,
+    "hsv_v": 0.35,
+    "overlap_mask": true,
+    "mask_ratio": 2
+  },
+  "sample_counts": {"real_train": 46, "legacy_train": 45, "focused_train": 63, "legacy_val": 108, "focused_val": 90},
+  "evaluation": {"conf": 0.25, "iou": 0.7, "match_iou": 0.5, "imgsz": 640, "agnostic_nms": true, "retina_masks": true},
+  "initial_models": {
+    "from_v1": "models/trained/stl_shape_v1/best.pt",
+    "from_v2": "models/trained/stl_shape_focus_v2/best.pt"
+  },
+  "constraints": {
+    "real_images_train_only": true,
+    "no_real_independent_validation_available": true,
+    "no_test_images_used": true,
+    "real_training_fit_is_not_generalization_accuracy": true,
+    "automatic_deployment": false,
+    "cloud_spend": 0
+  },
+  "notes": "Local three-epoch paired smoke experiment, not formal convergence or 99% acceptance. Real/legacy/focused sampling is 46/45/63 per epoch. Choose checkpoints only on held-out synthetic validation; no real generalization claim. Existing deployed models remain unchanged."
+}

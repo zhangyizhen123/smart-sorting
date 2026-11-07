@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "output": "dataset/unseen_shape_test_v3",
+  "seed": 20261219,
+  "legacy_per_class": 100,
+  "focused_per_class": 200,
+  "negative_images": 200,
+  "role": "sealed_synthetic_test",
+  "rules": ["Do not use predictions on this set to select training checkpoints", "Lock the candidate before final evaluation", "Synthetic unseen scenes are not independent physical-camera validation"]
+}

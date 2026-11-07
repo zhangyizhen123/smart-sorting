@@ -72,16 +72,16 @@
 <body>
 <main>
   <header>
-    <div><p class="eyebrow">智能分拣 / 阶段成果</p><h1>九类形状模型 · 看见每一个物块</h1><p class="muted">从 STL 建模文件自动生成图像和轮廓标注，训练形状识别与实例分割模型。</p></div>
+    <div><p class="eyebrow">智能分拣 / 阶段成果</p><h1>九类形状模型 · 图片识别与轮廓查看</h1><p class="muted">从 STL 建模文件自动生成图像和轮廓标注，训练形状识别与实例分割模型。</p></div>
     <span class="badge" id="mode-badge">合成数据演示 · 已保存的推理结果</span>
   </header>
   <section class="metrics" aria-label="完整合成测试集指标">
-    <div class="metric"><b>9 类</b><span>几何形状 · YOLO11n-seg</span></div>
-    <div class="metric"><b id="test-count"></b><span>独立合成测试图 / 不只这 12 个样例</span></div>
-    <div class="metric"><b id="map50"></b><span>掩膜 mAP50</span></div>
-    <div class="metric"><b id="map5095"></b><span>掩膜 mAP50–95 · 更严格的轮廓指标</span></div>
+    <div class="metric"><b id="metric-primary-value">9 类</b><span id="metric-primary-label">几何形状 · YOLO11n-seg</span></div>
+    <div class="metric"><b id="test-count"></b><span id="test-count-label">独立合成测试图 / 不只这 12 个样例</span></div>
+    <div class="metric"><b id="map50"></b><span id="map50-label">掩膜 mAP50</span></div>
+    <div class="metric"><b id="map5095"></b><span id="map5095-label">掩膜 mAP50–95 · 更严格的轮廓指标</span></div>
   </section>
-  <p class="notice">上面的指标和预置样例来自首版合成测试集，不是导入图片的准确率。本模型只学习了九类合成形状，其他物体也可能被误判；正方体与长方体仍容易混淆，真实物块效果尚未验证。</p>
+  <p id="metric-scope" class="notice">上面的指标和预置样例来自首版合成测试集，不是导入图片的准确率。本模型只学习了九类合成形状，其他物体也可能被误判；正方体与长方体仍容易混淆，真实物块效果尚未验证。</p>
   <p id="active-pipeline" class="notice" hidden></p>
   <section class="upload-panel" aria-labelledby="upload-heading">
     <h2 id="upload-heading">导入自己的图片</h2>
@@ -101,6 +101,7 @@
       <div class="toolbar"><h2 id="case-title"></h2><div class="toggles">
         <label><input id="show-truth" type="checkbox"> 显示参考轮廓</label>
         <label><input id="show-mask" type="checkbox" checked> 显示预测轮廓</label>
+        <label id="model-mask-option" hidden><input id="show-model-mask" type="checkbox"> 对照保留物块的模型原始轮廓</label>
         <label><input id="show-box" type="checkbox" checked> 显示预测框</label>
       </div></div>
       <div class="comparison">
@@ -143,7 +144,16 @@
     const width = svg.viewBox.baseVal.width, height = svg.viewBox.baseVal.height;
     const color = colors[index % colors.length];
     const points = item.polygon.map(([x, y]) => [x * width, y * height]);
-    if (showMask && points.length) svg.appendChild(shape('polygon', {points: points.map(p => p.join(',')).join(' '), fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    const rings = el('show-model-mask').checked && Array.isArray(item.model_mask_contours) ? item.model_mask_contours : item.mask_contours;
+    if (showMask && Array.isArray(rings)) {
+      const d = rings.filter(ring => ring.length).map(ring =>
+        ring.map(([x, y], i) => (i ? 'L' : 'M') + (x * width) + ' ' + (y * height)).join(' ') + ' Z'
+      ).join(' ');
+      svg.appendChild(shape('path', {d, 'data-mask-native': 'true', 'fill-rule': 'evenodd', fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    } else if (showMask && points.length) {
+      // Archived samples retain their original polygon format and results.
+      svg.appendChild(shape('polygon', {points: points.map(p => p.join(',')).join(' '), fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    }
     let box = item.box;
     if (!box) { const xs = points.map(p => p[0] / width), ys = points.map(p => p[1] / height); box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
     const [x1, y1, x2, y2] = [box[0] * width, box[1] * height, box[2] * width, box[3] * height];
@@ -174,6 +184,9 @@
     document.querySelectorAll('.stage').forEach(stage => stage.style.aspectRatio = current.width + ' / ' + current.height);
     ['truth-overlay', 'prediction-overlay'].forEach(id => el(id).setAttribute('viewBox', '0 0 ' + viewWidth + ' ' + viewHeight));
     el('show-truth').disabled = custom;
+    const guided = custom && current.predictions.some(item => item.contour_method === 'rgb_guided');
+    el('model-mask-option').hidden = !guided;
+    if (!guided) el('show-model-mask').checked = false;
     el('truth-overlay').replaceChildren(); el('prediction-overlay').replaceChildren();
     if (!custom && el('show-truth').checked) current.truth.forEach((item, index) => addOutline(el('truth-overlay'), item, index, true, false));
     current.predictions.forEach((item, index) => addOutline(el('prediction-overlay'), item, index, el('show-mask').checked, el('show-box').checked));
@@ -188,7 +201,7 @@
         el('prediction-list').appendChild(message);
       }
       el('case-status').textContent = current.status === 'done'
-        ? '本机实时预测 ' + current.predictions.length + ' 个 · 置信度 ≥ ' + current.settings.conf + ' · 输入 ' + current.width + ' × ' + current.height + ' · 耗时 ' + current.elapsed_seconds.toFixed(2) + ' 秒。未检出不表示图片中一定没有物块。'
+        ? '本机实时预测 ' + current.predictions.length + ' 个 · 置信度 ≥ ' + current.settings.conf + ' · 图片 ' + current.width + ' × ' + current.height + ' · ' + (Array.isArray(current.settings.component_image_sizes) ? '组合检测尺寸 ' + current.settings.component_image_sizes.join(' / ') : '模型输入尺寸 ' + current.settings.imgsz) + ' · 耗时 ' + current.elapsed_seconds.toFixed(2) + ' 秒。' + (guided ? (el('show-model-mask').checked ? '当前对照保留物块的模型原始轮廓。' : '当前显示按照片边缘校正的轮廓，保护检查不通过时保留原轮廓。') : '轮廓按原始掩膜显示。') + '置信度不等于实拍正确率，未检出不表示没有物块。'
         : '图片 ' + current.width + ' × ' + current.height + '；原图与预测保持相同方向和比例。';
     } else {
       list('truth-list', current.truth, false);
@@ -199,12 +212,33 @@
   function uploadMessage(message, error = false) {
     el('upload-status').textContent = message; el('upload-status').classList.toggle('error', error);
   }
+  function showAcceptedMetrics() {
+    const e = data.active_pipeline?.evaluation;
+    if (!e || e.joint_gate_passed !== true || e.not_deployed === true || !Number.isFinite(e.test_images) || !Number.isFinite(e.strict_instance_score) || !Number.isFinite(e.extra_false_positives) || !Number.isFinite(e.boundary_iou)) return;
+    el('metric-primary-value').textContent = e.test_images + ' 张';
+    el('metric-primary-label').textContent = '未参与选型的新合成场景 / 三版同批对照';
+    el('test-count').textContent = (e.strict_instance_score * 100).toFixed(2) + '%';
+    el('test-count-label').textContent = '严格实例得分 · 漏检、错类、重复及误报均计入';
+    el('map50').textContent = String(e.extra_false_positives);
+    el('map50-label').textContent = '额外误报数 · 固定置信度 ' + data.active_pipeline.settings.conf.toFixed(2);
+    el('map5095').textContent = e.boundary_iou.toFixed(4);
+    el('map5095-label').textContent = '总体边界 IoU · 未匹配物块记零';
+    el('metric-scope').textContent = '上方为新流程在 ' + e.test_images + ' 张未见合成图上的固定配置结果，不代表任意实拍图片的准确率。导入图片使用新流程；预置样例保留首版对照。独立固定相机实拍与整机分拣验收尚未完成。';
+  }
   function updatePipelineNotice() {
     if (!data.active_pipeline) return;
     const e = data.active_pipeline.evaluation;
     const evaluatedConfidence = data.active_pipeline.settings.conf;
     const changed = Math.abs(Number(el('confidence').value) - evaluatedConfidence) > 1e-6;
     el('active-pipeline').hidden = false;
+    if (data.active_pipeline.version >= 2) {
+      const passed = e.joint_gate_passed === true && e.not_deployed !== true;
+      const score = Number.isFinite(e.strict_instance_score)
+        ? (passed ? '新合成测试' : '开发验证') + '严格实例得分 ' + (e.strict_instance_score * 100).toFixed(2) + '%。'
+        : '';
+      el('active-pipeline').textContent = (passed ? '导入图片使用通过三项联合验收的流程。' : '当前为开发验证流程，尚未通过识别、误报、轮廓三项联合验收。') + score + '固定评估置信度 ' + evaluatedConfidence.toFixed(2) + '。' + (changed ? '当前阈值已改变，固定评估分数不代表当前设置的表现。' : '') + (data.active_pipeline.mask_refinement_enabled ? '已启用原图边缘校正，可切换查看保留物块的模型原始轮廓。' : '') + (data.active_pipeline.verifier_enabled ? '已启用形状与背景复核。' : '') + (passed && Number.isFinite(e.test_images) ? '预置样例仍为首版对照。' : '预置样例和上方mAP仍为首版对照。') + '独立实拍验收尚未完成。';
+      return;
+    }
     el('active-pipeline').textContent = '导入图片使用专项模型' + (e.target_achieved ? '' : '（试验版）') + '；冻结合成测试严格实例得分 ' + (e.strict_instance_score * 100).toFixed(2) + '%（' + e.instances + ' 个实例）。' + (e.target_achieved ? '已达到本次合成测试99%目标。' : '尚未达到99%目标。') + '验收使用置信度 ' + evaluatedConfidence.toFixed(2) + '。' + (changed ? '当前阈值已改变，上述分数不代表当前设置的表现。' : '') + '预置样例和上方mAP仍为首版对照。' + (data.active_pipeline.refiner_enabled ? '已启用经过验证的类别复核。' : '本轮使用分割模型直接判断。') + '实拍效果尚未验证。';
   }
   function updateControls() {
@@ -227,7 +261,9 @@
       uploadMessage('请选择图片，再点击“识别形状”。处理期间请保留启动窗口。');
     } catch (error) {
       connected = false; el('reconnect').hidden = false;
-      uploadMessage('未连接到本机模型。请保持“' + (data.active_pipeline ? '演示专项模型.cmd' : '演示模型.cmd') + '”的窗口打开，然后点“重新连接模型”。', true);
+      uploadMessage(data.active_pipeline?.version >= 2
+        ? '未连接到当前流程。请保持对应的本机启动窗口打开，然后点“重新连接模型”。'
+        : '未连接到本机模型。请保持“' + (data.active_pipeline ? '演示专项模型.cmd' : '演示模型.cmd') + '”的窗口打开，然后点“重新连接模型”。', true);
     }
     updateControls();
   }
@@ -284,6 +320,7 @@
   el('confidence').addEventListener('input', () => {
     el('confidence-value').textContent = Number(el('confidence').value).toFixed(2);
     updatePipelineNotice();
+    showAcceptedMetrics();
     if (uploaded && !busy) { uploaded = {...uploaded, status: 'selected', predictions: []}; uploadMessage('置信度已调整，请点击“识别形状”重新计算。'); render(); }
   });
   el('show-upload').addEventListener('click', () => { if (uploaded) { active = -1; render(); } });
@@ -293,7 +330,7 @@
     button.textContent = String(index + 1).padStart(2, '0') + '  ' + item.title;
     button.addEventListener('click', () => { active = index; render(); }); el('cases').appendChild(button);
   });
-  ['show-truth', 'show-mask', 'show-box'].forEach(id => el(id).addEventListener('change', render));
+  ['show-truth', 'show-mask', 'show-box', 'show-model-mask'].forEach(id => el(id).addEventListener('change', render));
   el('test-count').textContent = data.evaluation.image_count + ' 张';
   el('map50').textContent = data.evaluation.mask.mAP50.toFixed(3);
   el('map5095').textContent = data.evaluation.mask.mAP50_95.toFixed(3);
@@ -303,7 +340,12 @@
     el('confidence').value = data.active_pipeline.settings.conf;
     el('confidence-value').textContent = Number(el('confidence').value).toFixed(2);
     updatePipelineNotice();
-    el('start-command').textContent = '双击项目根目录的「演示专项模型.cmd」即可导入新图片并识别，使用期间保留启动窗口。原「演示模型.cmd」继续提供首版对照。单独打开 HTML 文件仍只展示预置样例。';
+    showAcceptedMetrics();
+    el('start-command').textContent = data.active_pipeline.version >= 2
+      ? (data.active_pipeline.evaluation.joint_gate_passed === true && data.active_pipeline.evaluation.not_deployed !== true
+        ? '默认升级完成后，双击项目根目录的「演示模型.cmd」即可使用联合优化流程。先点「选择图片」，再点「识别形状」；使用期间保留启动窗口。「演示首版对照.cmd」和「演示专项模型.cmd」保留旧版对照。单独打开 HTML 文件只展示预置样例。'
+        : '当前页面由指定流程启动，请保持对应的本机启动窗口打开。单独打开 HTML 文件仍只展示预置样例；默认演示仅在联合验收通过后升级。')
+      : '双击项目根目录的「演示专项模型.cmd」即可导入新图片并识别，使用期间保留启动窗口。原「演示模型.cmd」继续提供首版对照。单独打开 HTML 文件仍只展示预置样例。';
   }
   render();
   connect();

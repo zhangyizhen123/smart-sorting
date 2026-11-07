@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "default_deployment_verified": true,
+  "started_at": "2026-11-01T23:54:28.080602+00:00",
+  "launcher": "演示模型.cmd",
+  "launcher_sha256": "65c43d6067060e75ce5b679d12ab4c83ce78eb551150bf86b82953041834ad91",
+  "port": 9881,
+  "explicit_pipeline_argument": false,
+  "independent_real_test": false,
+  "launcher_pid": 34072,
+  "health": {
+    "ready": true,
+    "model_sha256": "d51cc9c95e9949691f9aafc8bf7efd5adf746b2578f3e7a0b755553a127f36e0",
+    "names": [
+      "cylinder",
+      "cube",
+      "cuboid",
+      "tri_prism",
+      "pent_prism",
+      "hex_prism",
+      "cone",
+      "tetrahedron",
+      "sphere"
+    ],
+    "chinese_names": [
+      "圆柱体",
+      "正方体",
+      "长方体",
+      "三棱柱",
+      "五棱柱",
+      "六棱柱",
+      "圆锥",
+      "四面体",
+      "球体"
+    ],
+    "max_bytes": 20971520,
+    "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed"
+  },
+  "started_outside_project": true,
+  "focused_launcher_sha256": "a8a9896d9e562a1573f4bb3abf504a7791251640ca82ff4fe12bc4abddc0ec62",
+  "original_launcher_preserved": true,
+  "checks": [
+    "actual_cmd_entrypoint",
+    "no_pipeline_override",
+    "release_and_model_hashes",
+    "page_served",
+    "original_and_focused_launchers_preserved"
+  ],
+  "cleanup_exit_code": 0,
+  "verification_port_closed": true,
+  "finished_at": "2026-11-01T23:54:32.987510+00:00"
+}

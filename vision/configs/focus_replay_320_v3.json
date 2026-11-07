@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "dataset": "dataset/replay_optimization_v3",
+  "output": "runs/segment/replay_optimization_v3/focus_replay_320",
+  "evaluation_output": "runs/segment/replay_optimization_v3",
+  "initial_model": "models/trained/stl_shape_focus_v2/best.pt",
+  "seed": 20261117,
+  "training": {"epochs": 6, "imgsz": 320, "batch": 4, "threads": 1, "freeze": 10, "lr0": 0.0001, "lrf": 0.2, "mask_ratio": 1},
+  "milestones": [1, 3, 6],
+  "constraints": {"test_used_for_selection": false, "no_auto_deploy": true, "no_cloud_spend": true},
+  "rationale": "Keep the original focused model input scale and stronger class head; replay legacy, real-training-only, and known-empty scenes. Compare on unchanged large development data."
+}

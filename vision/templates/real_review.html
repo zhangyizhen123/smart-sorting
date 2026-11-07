@@ -1,0 +1,46 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>实物轮廓核对</title>
+<style>body{font:16px system-ui,"Microsoft YaHei",sans-serif;margin:0;background:#f3f5f8;color:#1c2b40}header{padding:24px;background:#fff;border-bottom:1px solid #ccd4de}h1{margin:0 0 12px}main{max-width:1400px;margin:auto;padding:20px}button,select,input,textarea{font:inherit}button{padding:9px 14px;border:1px solid #75869e;border-radius:6px;background:white;cursor:pointer}button.primary{background:#155e75;color:white}select{max-width:100%;padding:6px}.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.note{padding:12px;background:#fff3d9;border-left:4px solid #b66c09}.card{background:white;border:1px solid #ced6df;border-radius:10px;margin:20px 0;padding:20px}.card.approved{border:2px solid #188061}.pictures{display:grid;grid-template-columns:1fr 1fr;gap:16px}img{max-width:100%;height:380px;object-fit:contain;background:#eef1f5}.pictures a{display:block;text-align:center}.instances{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.instance{border:1px solid #ccd4de;padding:8px;border-radius:5px}.warning{color:#9c4217}.filename{overflow-wrap:anywhere}textarea{display:block;box-sizing:border-box;width:100%;min-height:65px;margin:10px 0}.approval{display:block;padding:12px;background:#eef6f1}.counter{width:75px}footer{padding:20px}.hidden{display:none}@media(max-width:700px){.pictures{grid-template-columns:1fr}img{height:300px}main{padding:10px}.card{padding:12px}}</style></head>
+<body><header><h1>实物轮廓核对</h1><p id="summary"></p><p class="note" id="review-notice">左侧原图，右侧标注初稿。这里的轮廓由独立标注工具和人工提示生成，尚未获你确认，不能直接当训练真值。空托盘应无物块轮廓；圆孔和阴影不能圈进去。</p>
+<div class="toolbar"><label>查看 <select id="filter"><option value="all">全部图片</option><option value="positive">有物块</option><option value="empty">空托盘</option><option value="flagged">需要重点核对</option><option value="unreviewed">尚未通过</option></select></label><button id="export" class="primary">导出核对结果</button><span id="progress"></span></div>
+<p>每张图：核对物块数量、形状与边界。正确就勾选“本图全部正确”；有问题写“几号物块哪里不对”，我来修，不需要你手画。点击图片可放大。右图的编号与下方选项对应；改选形状后，以选项为准，右图文字仍保留初稿。颜色仅按照片外观记录，不等于已校准颜色。</p><p id="storage-status">核对结果保存在本浏览器中；完成后请导出JSON并把文件路径发给我。可以分批检查，每次结束前导出保存。导出不会自动开始训练。</p></header><main id="cards"></main><footer>同一物块的相邻照片按组管理。本批是开发资料，不作为最终独立测试。</footer>
+<script>
+'use strict';
+const data=__ANNOTATIONS__;
+const names=['cylinder','cube','cuboid','tri_prism','pent_prism','hex_prism','cone','tetrahedron','sphere'];
+const chinese=['圆柱体','正方体','长方体','三棱柱','五棱柱','六棱柱','圆锥','四面体','球体'];
+const colors={blue:'蓝色',purple:'紫色',white:'白色',gray:'灰色',green:'绿色',yellow:'黄色'};
+const savedReviews=Object.fromEntries((data.saved_review?.reviews||[]).map(r=>[r.image_id,{image_sha256:r.image_sha256,approved:r.approved,actual_count:r.actual_count,classes:r.instances.map(i=>i.class_name),notes:r.notes}]));
+const storageKey='sorting-real-review-'+data.review_revision+(data.saved_review?'-'+data.saved_review.snapshot_sha256:'');let reviews={};
+try{reviews=JSON.parse(localStorage.getItem(storageKey)||'{}');}catch(e){document.querySelector('#storage-status').textContent='浏览器存储不可用，请在关闭页面前导出核对结果。';}
+if(!reviews||typeof reviews!=='object'||Array.isArray(reviews))reviews={};
+for(const r of data.images){const s=reviews[r.image_id];if(s&&(s.image_sha256!==r.source_sha256||typeof s.approved!=='boolean'||!Number.isInteger(s.actual_count)||s.actual_count<0||!Array.isArray(s.classes)||s.classes.length!==r.instances.length||typeof s.notes!=='string'))delete reviews[r.image_id];}
+const el=(tag,text,attrs={})=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;for(const[k,v]of Object.entries(attrs))node.setAttribute(k,v);return node;};
+function state(r){return reviews[r.image_id]||(reviews[r.image_id]=savedReviews[r.image_id]?structuredClone(savedReviews[r.image_id]):{image_sha256:r.source_sha256,approved:false,actual_count:r.instances.length,classes:r.instances.map(i=>i.class_name),notes:''});}
+function valid(r,s){return Number.isInteger(s.actual_count)&&s.actual_count===r.instances.length&&s.classes.length===r.instances.length&&s.classes.every(c=>names.includes(c));}
+function save(){try{localStorage.setItem(storageKey,JSON.stringify(reviews));}catch(e){document.querySelector('#storage-status').textContent='无法自动保存，请导出核对结果。';}updateProgress();}
+function updateProgress(){const approved=data.images.filter(r=>{const s=state(r);return s.approved&&valid(r,s);}).length;document.querySelector('#progress').textContent=`已通过 ${approved} / ${data.images.length} 张`;}
+function draw(){
+ const kind=document.querySelector('#filter').value;const container=document.querySelector('#cards');container.replaceChildren();
+ for(const r of data.images){const s=state(r),flagged=r.instances.some(i=>i.class_name==='unknown'||i.warnings.length||i.assistant_correction);
+  if((kind==='positive'&&r.is_empty_tray)||(kind==='empty'&&!r.is_empty_tray)||(kind==='flagged'&&!flagged)||(kind==='unreviewed'&&s.approved&&valid(r,s)))continue;
+  const card=el('section',undefined,{class:'card'+(s.approved&&valid(r,s)?' approved':''),'data-id':r.image_id});
+  card.append(el('h2',r.name,{class:'filename'}));
+  const pictures=el('div',undefined,{class:'pictures'});
+  for(const[label,path]of[['原图',r.image],['轮廓初稿',r.overlay]]){const col=el('div');col.append(el('h3',label));const a=el('a',undefined,{href:path,target:'_blank',rel:'noopener'});a.append(el('img',undefined,{src:path,alt:label+' '+r.name,loading:'lazy'}));col.append(a);pictures.append(col);}card.append(pictures);
+  const countLabel=el('label','实际物块数量：');const count=el('input',undefined,{type:'number',min:0,max:100,class:'counter','aria-label':'实际物块数量'});count.value=s.actual_count;countLabel.append(count);card.append(countLabel);
+  const instances=el('div',undefined,{class:'instances'});
+  r.instances.forEach((item,index)=>{const block=el('label',`${index+1}号 · ${colors[item.color_observed]||item.color_observed} `,{class:'instance'});const select=el('select',undefined,{'aria-label':`${index+1}号形状`});select.append(el('option','待确认',{value:'unknown'}));names.forEach((name,i)=>select.append(el('option',chinese[i],{value:name})));select.value=s.classes[index];select.addEventListener('change',()=>{s.classes[index]=select.value;s.approved=false;refreshApproval();save();});block.append(select);if(item.warnings.length||item.assistant_correction)block.append(el('span',' · 边界需重点核对',{class:'warning'}));instances.append(block);});card.append(instances);
+  if(r.is_empty_tray)card.append(el('p','空托盘：应当没有任何物块；圆孔属于背景。'));
+  const note=el('textarea',undefined,{placeholder:'例如：2号圈进了阴影；漏了白色块；形状应为长方体。','aria-label':'问题说明'});note.value=s.notes;note.addEventListener('input',()=>{s.notes=note.value;s.approved=false;refreshApproval();save();});card.append(note);
+  const approvalLabel=el('label',undefined,{class:'approval'}),approval=el('input',undefined,{type:'checkbox','aria-label':'本图全部正确'});approvalLabel.append(approval,document.createTextNode(' 我已检查：物块数量、类别和可见轮廓全部正确。'));card.append(approvalLabel);
+  function refreshApproval(){approval.disabled=!valid(r,s);approval.checked=s.approved&&valid(r,s);card.classList.toggle('approved',approval.checked);}
+  count.addEventListener('input',()=>{s.actual_count=count.value===''?null:Number(count.value);s.approved=false;refreshApproval();save();});approval.addEventListener('change',()=>{s.approved=approval.checked;refreshApproval();save();});refreshApproval();container.append(card);
+ }
+ updateProgress();
+}
+document.querySelector('#summary').textContent=`共 ${data.images.length} 张唯一图片；${data.images.filter(r=>r.is_empty_tray).length} 张空托盘；${data.images.reduce((n,r)=>n+r.instances.length,0)} 个物块轮廓初稿。`;
+if(data.saved_review){document.querySelector('#review-notice').textContent=`已归档 ${data.saved_review.reviewed_image_count} 张图片的审核确认，页面已载入对应结果。数量、类别和边界确认与图片版本绑定；标注通过不代表模型已重新训练。`;document.querySelector('#summary').textContent=document.querySelector('#summary').textContent.replace('轮廓初稿','轮廓标注');document.querySelector('#storage-status').textContent='已保存的审核结果会自动载入，不需要重复勾选。若之后发现问题，可修改并重新导出；修改会取消该图当前的通过状态。';}
+document.querySelector('#filter').addEventListener('change',draw);
+document.querySelector('#export').addEventListener('click',()=>{const invalid=data.images.find(r=>{const c=state(r).actual_count;return !Number.isInteger(c)||c<0||c>100;});if(invalid){alert(invalid.name+'：请先填写0到100的整数物块数量；不确定可保留初始数量并在问题说明中注明。');return;}const exported={version:1,review_revision:data.review_revision,exported_at:new Date().toISOString(),source:'explicit_user_review',reviews:data.images.map(r=>{const s=state(r);return{image_id:r.image_id,image_sha256:r.source_sha256,approved:Boolean(s.approved&&valid(r,s)),actual_count:s.actual_count,notes:s.notes,instances:r.instances.map((item,i)=>({instance_id:item.instance_id,class_name:s.classes[i],mask_sha256:item.mask_sha256}))};})};const blob=new Blob([JSON.stringify(exported,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=el('a',undefined,{href:url,download:'实物轮廓核对结果.json'});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+draw();
+</script></body></html>

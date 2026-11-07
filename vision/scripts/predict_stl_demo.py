@@ -117,13 +117,13 @@ def load_model() -> YOLO:
     return model
 
 
-def serialize_predictions(result) -> list[dict]:
+def serialize_predictions(result, *, include_mask_geometry: bool = False) -> list[dict]:
     boxes, masks = result.boxes, result.masks
     if boxes is None or not len(boxes):
         return []
     if masks is None or len(boxes) != len(masks):
         raise ValueError("Missing instance masks")
-    return [
+    predictions = [
         {
             "class_id": int(class_id),
             "confidence": round(float(confidence), 6),
@@ -134,6 +134,13 @@ def serialize_predictions(result) -> list[dict]:
             boxes.cls.cpu().tolist(), boxes.conf.cpu().tolist(), boxes.xyxyn.cpu().tolist(), masks.xyn, strict=True,
         )
     ]
+    if include_mask_geometry:
+        from mask_display import native_mask_geometry
+        if tuple(masks.data.shape[-2:]) != tuple(result.orig_shape):
+            raise ValueError("Native mask display requires retina_masks=True and original-image mask coordinates")
+        for prediction, mask in zip(predictions, masks.data.cpu().numpy(), strict=True):
+            prediction.update(native_mask_geometry(mask))
+    return predictions
 
 
 def render_demo(payload: dict) -> str:

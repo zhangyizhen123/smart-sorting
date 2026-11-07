@@ -8,7 +8,7 @@ if not exist "%SORTING_DEMO_PYTHON%" (
   pause
   exit /b 1
 )
-"%SORTING_DEMO_PYTHON%" "%~dp0vision\scripts\serve_stl_demo.py" %*
+"%SORTING_DEMO_PYTHON%" "%~dp0vision\scripts\serve_stl_demo.py" --pipeline "%~dp0models\trained\stl_shape_joint_v4\pipeline.json" %*
 if errorlevel 1 (
   echo Demo server stopped with an error. The saved demo is still available in docs\stl_shape_v1_demo\index.html.
   pause

@@ -1,0 +1,80 @@
+{
+  "counts": {
+    "real_train": 46,
+    "legacy_train": 45,
+    "legacy_val": 108,
+    "focused_train": 63,
+    "focused_val": 90
+  },
+  "instance_counts": {
+    "real_train": {
+      "0": 21,
+      "1": 38,
+      "3": 6,
+      "5": 15,
+      "4": 11,
+      "8": 11,
+      "7": 16
+    },
+    "legacy_train": {
+      "5": 14,
+      "1": 14,
+      "0": 15,
+      "4": 14,
+      "2": 14,
+      "3": 14,
+      "7": 14,
+      "6": 13,
+      "8": 13
+    },
+    "legacy_val": {
+      "0": 26,
+      "5": 32,
+      "6": 37,
+      "1": 23,
+      "3": 33,
+      "2": 33,
+      "7": 37,
+      "4": 31,
+      "8": 27
+    },
+    "focused_train": {
+      "0": 20,
+      "6": 15,
+      "4": 14,
+      "1": 10,
+      "2": 20,
+      "3": 20,
+      "5": 15,
+      "7": 7,
+      "8": 7
+    },
+    "focused_val": {
+      "0": 29,
+      "6": 19,
+      "4": 21,
+      "1": 16,
+      "2": 29,
+      "3": 25,
+      "7": 13,
+      "8": 13,
+      "5": 20
+    }
+  },
+  "real_instances": 118,
+  "real_negative_images": 11,
+  "no_test_images": true,
+  "real_train_only": true,
+  "all_synthetic_groups_cover_nine_classes": true,
+  "all_real_polygon_roundtrip_iou": 1.0,
+  "versions": {
+    "torch": "2.15.0+cpu",
+    "ultralytics": "8.4.194",
+    "opencv": "5.0.0"
+  },
+  "script_sha256": {
+    "vision/scripts/train_seg.py": "939c6e285b891867400ffa96e4ac4049799a3cd1cb007260fe8633055f57d993",
+    "vision/scripts/prepare_real_training.py": "940e99522d40effc56cc769c21bb0dc392bbc107f77ce5910bdc77c13d6dc14e",
+    "vision/scripts/run_real_pilot.py": "ddccac4884039a5a3122aadfeec7f88cd87dc3a29370217a2bebde5663f7b281"
+  }
+}

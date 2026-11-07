@@ -1,0 +1,10 @@
+{
+  "activated_at": "2026-11-01T23:53:52.207257+00:00",
+  "candidate": "protected_consensus_v4",
+  "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed",
+  "launcher_sha256": "65c43d6067060e75ce5b679d12ab4c83ce78eb551150bf86b82953041834ad91",
+  "original_launcher_sha256": "5512f6298f535ef877db2da74200845c1ab0a0f0724fd121752a7e3cf3d4df17",
+  "ui_audit_sha256": "1dee68d4c4050cc4a116edd7a293b85c6017f0255fe9484548551bec6396c72b",
+  "rollback": "models/trained/stl_shape_joint_v4/rollback/演示模型.cmd",
+  "independent_real_test_images": 0
+}

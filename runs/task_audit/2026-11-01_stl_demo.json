@@ -1,7 +1,7 @@
 {
-  "checked_at": "2026-11-01T04:07:49-08:00",
+  "checked_at": "2026-11-01T05:40:43-08:00",
   "model_sha256": "5c7dd29d84c0b71b3110ca0da0f101210648e85b7e9badded00c2ab09f3b057e",
-  "demo_html_sha256": "c3f6e0537025591a4a158cd1d4332053678e05daf1ece53caaff5f3778dafc14",
+  "demo_html_sha256": "04059f33650c513eb2b31472c8a40fbb7a5d0c91aff50899d7d25c4a08ec7978",
   "predictions_sha256": "15a320a9bc11257ae75f8f5b30865087cc5831cdc333cc58c6f8d9bac8be2894",
   "cases_checked": 12,
   "classes_covered": 9,

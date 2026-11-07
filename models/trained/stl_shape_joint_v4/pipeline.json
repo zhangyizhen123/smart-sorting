@@ -1,0 +1,64 @@
+{
+  "version": 5,
+  "operation": "protected_agreement",
+  "runtime_sha256": "34e5d1017a2ec455257d6918f7ea4a6644676553d102cd28d81b1d629e171b2a",
+  "algorithm_sha256": {
+    "consensus_evidence.py": "cbedfbba7b8ba36e20d97bf28de11e37ad08ab63f8ce390db365cbe3af30593c",
+    "foreground_gate.py": "e2122102b366df21b663388cd773338474c14d2e98a16a6ff030e5618b25d6f4",
+    "protected_foreground.py": "533021ce584e5c45e0b7f67bbd54fc0bd20fc05a5c55280461ed1c0a19bbdc2c",
+    "shape_verifier.py": "221e8603064ab1167f8d047aa8b4872b7fee5a047a303e96ffa38a4cd83b9d31",
+    "specialist_shapes.py": "6041ca75a45aeef503f76923fd92081fa51ee0e1e5abdb4d28bd0e98c1a9ed52"
+  },
+  "sources": {
+    "base": {
+      "pipeline": "base/pipeline.json",
+      "pipeline_sha256": "2cb104b943678f217050af94d8be561fc99fa689f39de1c5c6c2b17f5f0d0e9a"
+    },
+    "specialist": {
+      "pipeline": "specialist/pipeline.json",
+      "pipeline_sha256": "b68ee0d29d27c795bd845213d2dbe587b854f414944d949af27c7f154fe1d8c5"
+    }
+  },
+  "foreground": {
+    "model": "foreground/model.pt",
+    "model_sha256": "bc90c407353f2b0d42b1ee9861ba060548c2dee0070db4202718829907f8e781"
+  },
+  "policy": {
+    "foreground": {
+      "foreground_threshold": 0.3,
+      "protect_confidence": 0.5,
+      "require_partner": true
+    },
+    "secondary_margin": 1.01,
+    "specialist": {
+      "match_iou": 0.5,
+      "maximum_primary_confidence": 1.01,
+      "minimum_specialist_confidence": 0.5,
+      "confidence_margin": 0.0,
+      "allowed_classes": [
+        6,
+        7
+      ]
+    }
+  },
+  "selection_sha256": "6e18d3b4b133a386266030f776cd9217f247f37397427b90691b0f6995608e2e",
+  "evaluation": {
+    "stage": "sealed_synthetic_test_passed",
+    "joint_gate_passed": true,
+    "not_deployed": false,
+    "strict_instance_score": 0.8600867678958786,
+    "test_images": 5800,
+    "instances": 11911,
+    "extra_false_positives": 75,
+    "false_positives_per_image": 0.01293103448275862,
+    "boundary_iou": 0.8540865940331234,
+    "independent_real_images": 0,
+    "scope": "New synthetic scenes only; the 46 real photographs were training data",
+    "test_result_sha256": "9e22723794a01e289702d8ab8b237734c68bfc06dbaf2b968c446a7781f8debb"
+  },
+  "release_origin": {
+    "source_pipeline_sha256": "8d4aa9caa1d9cb021cce1b8688ce1b7dfcc9154815f2f48b96c9347d6c175349",
+    "sealed_test_result_sha256": "9e22723794a01e289702d8ab8b237734c68bfc06dbaf2b968c446a7781f8debb",
+    "candidate_lock_sha256": "a32c3afdb83444528734b55373e8e1ebff4f27351ce7f747ba154fd1d2630905"
+  }
+}

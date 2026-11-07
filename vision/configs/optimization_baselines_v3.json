@@ -1,0 +1,16 @@
+{
+  "v1_deployed": {
+    "model": "models/trained/stl_shape_v1/best.pt",
+    "settings": {"imgsz": 320, "conf": 0.25, "iou": 0.7, "device": "cpu", "retina_masks": true, "agnostic_nms": false},
+    "role": "deployed_baseline"
+  },
+  "v2_deployed": {
+    "pipeline": "models/trained/stl_shape_focus_v2/pipeline.json",
+    "role": "deployed_baseline"
+  },
+  "pilot_640": {
+    "model": "runs/segment/real_mixed_pilot_v1/from_v1/weights/best.pt",
+    "settings": {"imgsz": 640, "conf": 0.25, "iou": 0.7, "device": "cpu", "retina_masks": true, "agnostic_nms": true},
+    "role": "training_fit_incumbent"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "source_files": 47,
+  "unique_images": 46,
+  "duplicate_excluded": 1,
+  "empty_images": 11,
+  "instances": 118,
+  "class_counts": {
+    "cylinder": 21,
+    "cube": 38,
+    "tri_prism": 6,
+    "hex_prism": 15,
+    "pent_prism": 11,
+    "sphere": 11,
+    "tetrahedron": 16
+  },
+  "assistant_corrected_masks": 8,
+  "source_bytes_preserved": true,
+  "approved_images": 46,
+  "approval_provenance": {
+    "method": "user_conversation_confirmation_recorded_by_assistant",
+    "user_statement": "全部正确，一个一个点太麻烦，你自己做吧",
+    "scope": "All 46 images and 118 instance identities and visible boundaries in the current review page, including 11 empty trays.",
+    "browser_clicks_performed_by_user": false
+  },
+  "all_training_approved_false": true,
+  "final_test_eligible": false,
+  "deployment_artifacts_unchanged": true,
+  "review_revision": "282658326c9883607993cfae75eb9eec579252d5ed32b962ca3db2dc3ab0f919",
+  "scope": "Structural audit plus recorded explicit user approvals; not an independent model accuracy evaluation."
+}

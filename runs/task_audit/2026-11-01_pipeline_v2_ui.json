@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "development_runtime_only": true,
+  "deployed": false,
+  "checks": [
+    "real_upload",
+    "class_consistency",
+    "original_guided_toggle",
+    "native_evenodd_paths",
+    "mask_and_box_toggles",
+    "historical_examples",
+    "mobile_no_overflow",
+    "confidence_notice"
+  ],
+  "pipeline_sha256": "a3ce7dc62c6ccd540f9b44f12b51c9206bc2c70e7e3399b6cd160a8d59fd1cd7",
+  "detections": 4,
+  "javascript_errors": []
+}

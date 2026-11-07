@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "dataset": "dataset/real_mixed_pilot_v1",
+  "output": "runs/segment/contour_audit_v1",
+  "models": {
+    "initial": "models/trained/stl_shape_v1/best.pt",
+    "pilot": "runs/segment/real_mixed_pilot_v1/from_v1/weights/best.pt"
+  },
+  "sizes": [640, 960],
+  "settings": {"conf": 0.25, "iou": 0.7, "agnostic_nms": true, "retina_masks": true, "device": "cpu"},
+  "regularization": {"epsilon_fraction": 0.0025, "epsilon_min": 0.5, "epsilon_max": 2.0, "minimum_iou": 0.98, "maximum_area_change": 0.02},
+  "mask_match_thresholds": [0.5, 0.75, 0.9],
+  "constraints": {"no_training": true, "no_automatic_deployment": true, "real_training_fit_only": true, "cloud_spend": 0}
+}

@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "development_runtime_only": true,
+  "release_qualified": false,
+  "default_deployment_verified": false,
+  "checks": [
+    "real_upload",
+    "class_consistency",
+    "original_guided_toggle",
+    "native_evenodd_paths",
+    "mask_and_box_toggles",
+    "historical_examples",
+    "mobile_no_overflow",
+    "confidence_notice",
+    "development_metrics",
+    "startup_instructions",
+    "real_training_photo_upload_and_contour_toggle"
+  ],
+  "pipeline_sha256": "8d4aa9caa1d9cb021cce1b8688ce1b7dfcc9154815f2f48b96c9347d6c175349",
+  "detections": 4,
+  "real_training_photo_smoke": {
+    "image": "dataset/real/raw/batch_20261101_import/tray_multi/IMG_20261101_194706..jpg",
+    "image_sha256": "c6d35fb9e8176965c6c513e27cec4fd54227d0c6cbdf76b3d9a08f521463fd51",
+    "detections": 4,
+    "elapsed_seconds": 9.343,
+    "purpose": "existing training photograph; upload/display check, not accuracy evaluation",
+    "independent_real_test": false
+  },
+  "javascript_errors": []
+}

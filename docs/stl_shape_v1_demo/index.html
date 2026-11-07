@@ -143,7 +143,15 @@
     const width = svg.viewBox.baseVal.width, height = svg.viewBox.baseVal.height;
     const color = colors[index % colors.length];
     const points = item.polygon.map(([x, y]) => [x * width, y * height]);
-    if (showMask && points.length) svg.appendChild(shape('polygon', {points: points.map(p => p.join(',')).join(' '), fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    if (showMask && Array.isArray(item.mask_contours)) {
+      const d = item.mask_contours.filter(ring => ring.length).map(ring =>
+        ring.map(([x, y], i) => (i ? 'L' : 'M') + (x * width) + ' ' + (y * height)).join(' ') + ' Z'
+      ).join(' ');
+      svg.appendChild(shape('path', {d, 'data-mask-native': 'true', 'fill-rule': 'evenodd', fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    } else if (showMask && points.length) {
+      // Archived samples retain their original polygon format and results.
+      svg.appendChild(shape('polygon', {points: points.map(p => p.join(',')).join(' '), fill: color, 'fill-opacity': .24, stroke: color, 'stroke-width': 1.5}));
+    }
     let box = item.box;
     if (!box) { const xs = points.map(p => p[0] / width), ys = points.map(p => p[1] / height); box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; }
     const [x1, y1, x2, y2] = [box[0] * width, box[1] * height, box[2] * width, box[3] * height];
@@ -188,7 +196,7 @@
         el('prediction-list').appendChild(message);
       }
       el('case-status').textContent = current.status === 'done'
-        ? '本机实时预测 ' + current.predictions.length + ' 个 · 置信度 ≥ ' + current.settings.conf + ' · 输入 ' + current.width + ' × ' + current.height + ' · 耗时 ' + current.elapsed_seconds.toFixed(2) + ' 秒。未检出不表示图片中一定没有物块。'
+        ? '本机实时预测 ' + current.predictions.length + ' 个 · 置信度 ≥ ' + current.settings.conf + ' · 图片 ' + current.width + ' × ' + current.height + ' · 模型输入尺寸 ' + current.settings.imgsz + ' · 耗时 ' + current.elapsed_seconds.toFixed(2) + ' 秒。轮廓按原始掩膜显示；置信度不等于实拍正确率，未检出不表示没有物块。'
         : '图片 ' + current.width + ' × ' + current.height + '；原图与预测保持相同方向和比例。';
     } else {
       list('truth-list', current.truth, false);

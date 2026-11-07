@@ -1,0 +1,23 @@
+{
+  "ui_display_review_passed": true,
+  "reviewed_screenshots": [
+    "pipeline_v5_development_desktop.png",
+    "pipeline_v5_development_mobile.png",
+    "pipeline_v5_development_real_training_photo.png"
+  ],
+  "development_pipeline_only": true,
+  "default_activated": false,
+  "real_training_photo": {
+    "filename": "IMG_20261101_194706..jpg",
+    "user_confirmed_objects": 5,
+    "model_detections": 4,
+    "observations": [
+      "White cube is missed",
+      "Blue cube is labeled cylinder",
+      "Green hexagonal prism is labeled cylinder",
+      "Some masks contain detached fragments and inaccurate boundaries"
+    ],
+    "independent_accuracy_evaluation": false,
+    "used_to_modify_locked_candidate": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "reviewed_at": "2026-11-01T23:53:44.640242+00:00",
+  "passed": true,
+  "purpose": "UI presentation review only; not real-photo accuracy acceptance",
+  "ui_audit_sha256": "1dee68d4c4050cc4a116edd7a293b85c6017f0255fe9484548551bec6396c72b",
+  "screenshots": [
+    {
+      "path": "runs/task_audit/joint_round4_release_desktop.png",
+      "sha256": "320e408cb747301a3027b0807da82fccebe14c0da993660154dcbd33dbb438e7"
+    },
+    {
+      "path": "runs/task_audit/joint_round4_release_mobile.png",
+      "sha256": "a2ff0fbb5554cef5985b49c605ff215f2da1213c99bef541d51ee7e88dc40906"
+    },
+    {
+      "path": "runs/task_audit/joint_round4_release_real_training_photo.png",
+      "sha256": "d8ef2a326e48fe350f52ed0a40ba30a9560ab1dcb8eb120839ed6cf170986772"
+    }
+  ],
+  "checks": [
+    "desktop shows actual 5800/86.01%/75/0.8541 sealed metrics",
+    "mobile controls readable with no horizontal overflow",
+    "heading describes image recognition and contour viewing",
+    "synthetic-only and no independent real-camera test limits visible",
+    "real-photo errors and fragmented contours remain visible"
+  ],
+  "real_training_photo_findings": {
+    "known_objects": 5,
+    "predictions": 4,
+    "missed": "white cube",
+    "misclassified_as_cylinder": [
+      "blue cube",
+      "green hexagonal prism"
+    ],
+    "contour_limitations": "detached fragments and inaccurate object edges",
+    "independent_real_test": false
+  }
+}

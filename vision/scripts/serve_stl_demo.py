@@ -137,10 +137,15 @@ class DemoHandler(BaseHTTPRequestHandler):
             settings = {**PREDICTION_SETTINGS, "conf": confidence}
             start = time.perf_counter()
             if self.server.pipeline:
-                predictions, settings = self.server.pipeline.predict(image, confidence)
+                predictions, settings = self.server.pipeline.predict(image, confidence, include_mask_geometry=True)
+                if self.server.pipeline.manifest.get('version', 1) >= 3:
+                    def component_sizes(pipeline):
+                        children = getattr(pipeline, 'children', None)
+                        return [size for child in children.values() for size in component_sizes(child)] if children else [pipeline.settings['imgsz']]
+                    settings = {**settings, 'component_image_sizes': component_sizes(self.server.pipeline)}
             else:
                 result = self.server.model.predict(source=image, verbose=False, **settings)[0]
-                predictions = serialize_predictions(result)
+                predictions = serialize_predictions(result, include_mask_geometry=True)
             preview = io.BytesIO()
             image.save(preview, format="PNG")
             filename = unquote(self.headers.get("X-Filename", "自选图片"))[:200]
@@ -178,12 +183,35 @@ def main() -> None:
     print("Loading local shape model...", flush=True)
     pipeline = None
     if args.pipeline:
-        from shape_pipeline import ShapePipeline
-        pipeline = ShapePipeline(args.pipeline)
+        from pathlib import Path
+        version = json.loads(Path(args.pipeline).read_text(encoding="utf-8")).get("version")
+        if version in {2, 3, 4, 5}:
+            import torch
+            import ultralytics.utils.torch_utils as torch_utils
+            torch.set_num_threads(7)
+            torch_utils.NUM_THREADS = 7
+        if version == 2:
+            from pipeline_v2 import NativeShapePipeline
+            pipeline = NativeShapePipeline(args.pipeline)
+        elif version == 3:
+            from pipeline_v3 import RecipePipeline
+            pipeline = RecipePipeline(args.pipeline)
+        elif version == 4:
+            from pipeline_v4 import SpecialistPipeline
+            pipeline = SpecialistPipeline(args.pipeline)
+        elif version == 5:
+            from pipeline_v5 import ProtectedPipeline
+            pipeline = ProtectedPipeline(args.pipeline)
+        else:
+            from shape_pipeline import ShapePipeline
+            pipeline = ShapePipeline(args.pipeline)
         model, model_hash = pipeline.model, pipeline.model_hash
         payload["active_pipeline"] = {"model_sha256": model_hash, "pipeline_sha256": pipeline.pipeline_hash,
                                       "evaluation": pipeline.manifest["evaluation"], "settings": pipeline.settings,
-                                      "refiner_enabled": pipeline.refiner is not None}
+                                      "refiner_enabled": pipeline.refiner is not None,
+                                      "version": version,
+                                      "mask_refinement_enabled": bool(getattr(pipeline, "mask_refinement", None)),
+                                      "verifier_enabled": getattr(pipeline, "verifier", None) is not None}
     else:
         model = load_model()
     page = render_demo(payload).encode("utf-8")

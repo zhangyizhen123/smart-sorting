@@ -1,0 +1,15 @@
+{
+  "galleries": [
+    {
+      "page": "dataset/real/raw/batch_20261101_import/index.html",
+      "images_loaded": 11,
+      "mobile_overflow": false
+    },
+    {
+      "page": "dataset/real/diagnostics/batch_20261101_import/index.html",
+      "images_loaded": 50,
+      "mobile_overflow": false
+    }
+  ],
+  "browser_errors": []
+}

@@ -1,0 +1,31 @@
+{
+  "records": 976,
+  "mask_files_hashed": 4528,
+  "accepted_geometry": 1820,
+  "guarded_fallbacks": 444,
+  "domain_counts": {
+    "initial_640": {
+      "focused": 90,
+      "legacy": 108,
+      "real": 46
+    },
+    "initial_960": {
+      "focused": 90,
+      "legacy": 108,
+      "real": 46
+    },
+    "pilot_640": {
+      "focused": 90,
+      "legacy": 108,
+      "real": 46
+    },
+    "pilot_960": {
+      "focused": 90,
+      "legacy": 108,
+      "real": 46
+    }
+  },
+  "previous_640_baselines_exact": true,
+  "model_and_source_hashes_unchanged": true,
+  "representative_mask_topology_and_overlap_checked": true
+}
