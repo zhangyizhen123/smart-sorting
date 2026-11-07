@@ -1,0 +1,53 @@
+# Windows x64, standard CPython 3.14, CPU development and demo handoff.
+# Snapshot: 2026-11-07. Use a NEW virtual environment; do not combine with the
+# historical requirements.txt / requirements-focused.txt training setup.
+# Public package indexes only. No machine-local paths or credentials.
+--index-url https://pypi.org/simple
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+anyio==4.15.1
+certifi==2026.10.23
+charset-normalizer==3.5.2
+contourpy==1.4.0
+cycler==0.12.1
+et_xmlfile==2.0.0
+filelock==4.2.4
+fonttools==4.68.0
+fsspec==2026.9.0
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+Jinja2==3.1.6
+kiwisolver==1.5.1
+MarkupSafe==3.0.3
+matplotlib==3.11.2
+mpmath==1.3.0
+networkx==3.7
+numpy==2.5.4
+nvidia-ml-py==13.615.71
+opencv-python==5.0.0.93
+openpyxl==3.1.5
+packaging==26.3
+pi_heif==1.4.0
+pillow==13.0.0
+polars==2.1.0
+polars-runtime-32==2.1.0
+psutil==7.2.2
+pyparsing==3.3.3
+python-dateutil==3.0.0
+PyYAML==6.0.3
+requests==2.34.2
+scipy==1.18.1
+setuptools==78.1.0
+six==1.17.0
+sympy==1.14.0
+torch==2.15.0+cpu
+torchvision==0.29.2+cpu
+typing_extensions==4.16.0
+tzdata==2026.6
+ultralytics==8.4.194
+ultralytics-platform==0.1.102
+ultralytics-thop==2.2.3
+urllib3==2.8.0
+XlsxWriter==3.2.9

@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "scope": "Local clean Windows checkout and isolated CPU environment",
+  "remote_machine_acceptance": false,
+  "parent_commit": "76cb12d70f78f431868da745de17f9b8da0ac4fe",
+  "validated_tree": "754faed831bd9eaf8fd55507ebc23885545eec87",
+  "started_at": "2026-11-07T10:30:28.843205+00:00",
+  "excluded_assets_absent": [
+    "dataset",
+    "reference",
+    "runs/segment",
+    "RTX5060 manuals"
+  ],
+  "requirements_sha256_lf": "23b0df1369857cefed9b94c222ec659c566272d12aff160c026cf40183778820",
+  "fresh_install": {
+    "package_count": 46,
+    "pip_version": "25.2",
+    "requirement_file": "vision/requirements-handoff.txt"
+  },
+  "environment_check": {
+    "exit_code": 0,
+    "output": "{\"python\": \"3.14.0\", \"platform\": \"Windows-10-10.0.19045-SP0\", \"locked_packages\": 46, \"isolated_environment\": true}"
+  },
+  "environment": {
+    "python": "3.14.0",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "locked_packages": 46,
+    "isolated_environment": true
+  },
+  "dependency_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found."
+  },
+  "unit_tests": {
+    "exit_code": 0,
+    "output": "Creating new Ultralytics Settings v0.0.8 file  \nView Ultralytics Settings with 'yolo settings' or at '<validation>\\yolo-config\\Ultralytics\\settings.json'\nUpdate Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/usage/settings\n.................................................................................................\n----------------------------------------------------------------------\nRan 97 tests in 0.476s\n\nOK",
+    "tests_run": 97
+  },
+  "task_tracker": {
+    "exit_code": 0,
+    "output": "OK: 129 tasks; unique IDs; valid dependencies; Markdown and Excel synchronized"
+  },
+  "demo": {
+    "passed": true,
+    "actual_cmd_entrypoint": true,
+    "started_outside_project": true,
+    "page_served": true,
+    "upload_passed": true,
+    "original_and_corrected_masks": true,
+    "sample": "docs/stl_shape_v1_demo/samples/scene000000__frame000.jpg",
+    "sample_sha256": "989acaadfcffa7ed750b382c7d1b6043d3e46c61011173ce13cff0bda5f5ab54",
+    "detections": 1,
+    "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed",
+    "model_sha256": "d51cc9c95e9949691f9aafc8bf7efd5adf746b2578f3e7a0b755553a127f36e0"
+  },
+  "verification_server_stopped": true,
+  "finished_at": "2026-11-07T10:31:29.527643+00:00",
+  "log_paths_normalized": true
+}

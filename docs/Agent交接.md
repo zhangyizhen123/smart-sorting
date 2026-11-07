@@ -1,66 +1,145 @@
 # 智能分拣项目 Agent 交接
 
-更新日期：2026-11-01
+更新日期：2026-11-07。面向另一台 Windows x64 电脑上的 Claude / Opus，首轮目标是理解项目、恢复开发环境、验证测试和演示，然后按任务编号继续开发。
 
-## 接手顺序
+## 接手顺序与依据
 
-1. 先读本文件，再读 [项目任务跟踪表.xlsx](任务跟踪表.xlsx) 的“总览与使用说明”“未完成任务”“资料与分工”工作表。CSV 是台账维护数据，不是 Excel 阅读版。
-2. 读 [项目总结](项目总结.md) 了解背景和实验边界，再读 [MaixCAM 2 与 STM32 实施方案](MaixCAM2与STM32实施方案.md) 了解系统流程、UART 协议和代码入口。
-3. 修改前检查 `git status --short`，保留并理解已有工作区改动。项目根目录 [AGENTS.md](../AGENTS.md) 规定任务表更新方式和完成口径。
-4. 开始某项工作前按稳定编号检查任务台账的状态、依赖、输入和验收标准；完成并验证后立即更新，不要推断线下硬件进度。
+1. 先读根目录 [CLAUDE.md](../CLAUDE.md) 和 [AGENTS.md](../AGENTS.md)，检查 `git status --short --branch`，保留已有工作区改动。
+2. 读 [README](../README.md)、本文件和 [联合优化模型验收结果](联合优化模型验收结果.md)，了解当前默认版本及其边界。
+3. Agent 阅读 [任务跟踪表.md](任务跟踪表.md)，按需查询 CSV 中对应任务的完整字段；用户阅读 [任务跟踪表.xlsx](任务跟踪表.xlsx)。CSV 是维护源，Excel 与 Markdown 由工具同步生成。
+4. 再读 [MaixCAM 2 与 STM32 实施方案](MaixCAM2与STM32实施方案.md) 了解硬件分工和接口。[项目总结](项目总结.md)、训练计划和早期推进方案包含历史阶段信息，不能替代当前代码、模型清单和已验证结果。
+5. 用户最新决定优先。需求表与方案有冲突时，指出涉及的任务编号和依据；未决事项不得仅凭较新的文件日期视为已确认。
 
-## 当前目标与已确认方案
+## 当前方案与实现边界
 
-- 视觉设备：Sipeed MaixCAM 2；控制器：STM32。
-- MaixCAM 2 固定斜视覆盖托盘，识别形状、颜色和目标坐标，经双向 UART 发给 STM32。
-- STM32 控制 XY、Z/夹爪、连续 360°舵机转台及显示屏；转台保留舵机并增加索引传感器。
-- 每轮六种形状+颜色组合按首次稳定识别顺序分配到 1–6 号盒；同类进同盒。
-- 投放孔下光电的稳定触发是成功计数依据；成功后 STM32 更新显示。投放超时后重新拍照并重识别，持续重试直到成功。
-- 物块基本随机散放且不重叠；XY 移至目标上方，夹爪垂直下降。低置信度多帧复核后暂停等待处理。
+- 视觉设备为 Sipeed MaixCAM 2，固定斜视覆盖托盘，识别形状、颜色和目标坐标，通过双向 UART 与 STM32 通信。
+- STM32 控制 XY、Z/夹爪、连续舵机转台和显示屏；转台方案保留舵机并增加索引传感器，具体板卡与现场参数仍待补齐。
+- 每轮六种形状与颜色组合按首次稳定识别分配到六个盒，同类进同盒。物块基本散放不重叠，夹爪从上方垂直抓取。
+- 投放光电的有效事件用于成功计数，投放超时后重拍重识别并重试；持续低置信度的处理、暂停恢复和空盘判断仍需按任务记录完善。
+- 失败物块消失后的处置、同帧并列排序、恢复与结束规则，核对 R-09、R-10、R-11。草案中的建议参数不代表这些任务已经闭环。
 
-以上是需求/方案约定，不表示实物已实现或通过验证。失败物块消失后的处理、同帧多类别并列顺序、低置信度人工恢复/空盘结束等仍有待决策项，按 R-09、R-10、R-11 处理，不要自行替用户定规则。
+Python 的 `vision/runtime/` 已有坐标标定、颜色接口、稳定识别、动态分盒、UART 编解码、pipeline 和 session；`firmware/stm32/` 已有 HAL 无关的协议及控制状态机骨架。桌面测试通过不表示 MaixCAM 2 已部署、STM32 已接线或整机已验收。
 
-## 工程现状
+## 当前模型与数据
 
-- 已有 Python 视觉运行时：校准、颜色原型接口、目标稳定/动态分盒、UART 编解码、pipeline 和 session；已有 STM32 HAL 无关协议及状态机骨架。
-- 已有桌面单元测试/主机 C 测试。请以当前代码和测试结果为准，不把合成数据指标当真实识别精度。
-- 已完成九类 STL 合成实例分割基线 D-13，权重在 `models/trained/stl_shape_v1/best.pt`；独立合成测试 mask mAP50 为 0.9154、mAP50-95 为 0.8716。老师展示入口见 [演示说明](老师演示操作说明.md)，展示与验证记录由 D-14 跟踪。
-- 自选图片演示由 D-15 跟踪：根目录 `演示模型.cmd` 启动 `serve_stl_demo.py` 本机服务，页面选图后调用实际模型；只打开 HTML 文件仍是预置样例浏览。图片不自动保存或用于训练。
-- 三组专项由 D-16/D-17/D-18 分别跟踪工程、训练验收、99%目标。见 [专项说明](三组易混形状专项训练.md)；运行状态在 `runs/segment/focused_v2_cpu/status.json`。不要把 CPU 20轮试运行写成640输入150轮正式训练；不要把旧口头“正确数/真值数”当作已扣重复检出的严格得分。
-- CPU 试验已完成并归档到 `models/trained/stl_shape_focus_v2/`：540 张训练图、320 输入、20 轮，验证900张、测试2880张5907实例。新冻结集严格得分57.10%→93.62%，未达99%；漏检371→5、重复检测1703→9。见[专项实际结果](视觉训练结果_三组专项.md)。双击 `演示专项模型.cmd` 使用试验版，原入口仍用首版。
-- **旧测试集发生退化**：108张273实例严格得分72.16%→65.69%，重点影响正方体、三棱柱、四面体，已登记D-19。不能宣称专项模型已全面替代首版。当前测试结果已公开用于归因；下一轮改方案要另留独立测试批次，不能拿本测试集反复调参后再声称99%。
-- 尚无本轮真实物块数据和真实数据模型、最终相机标定/颜色参数、具体 STM32 型号和板级工程、最终接线、实机传感器参数及整机验收结果。D-08 继续跟踪真实数据训练。
-- 单相机能否满足全部姿态/位置精度、斜视高度视差、转台六盒重复定位、投放光电时序都需要实测。
-- 工作区状态以接手时的 `git status --short` 为准；有未提交内容时先确认归属，不清理、覆盖或重置用户改动。
+默认入口是根目录 `演示模型.cmd`，加载 `models/trained/stl_shape_joint_v4/pipeline.json`。目录名中的 v4 表示该轮发布，JSON 的运行时格式为 **version 5**，不是版本冲突。
 
-## 推荐的下一步
+| 入口 | 模型目录 | 用途 |
+| --- | --- | --- |
+| `演示模型.cmd` | `models/trained/stl_shape_joint_v4/` | 当前联合优化默认流程 |
+| `演示首版对照.cmd` | `models/trained/stl_shape_v1/` | 首版对照 |
+| `演示专项模型.cmd` | `models/trained/stl_shape_focus_v2/` | 易混形状专项对照 |
 
-可不依赖新硬件资料先推进：
+第二轮 5800 张新合成场景、11911 个物块的同集对照中，默认流程严格实例得分 **86.01%**，额外误报 **75**，总体边界 IoU **0.8541**。严格得分不是普通分类准确率；总体改善也不代表每一类、每张图都改善。首版及专项版的不同历史测试结果不能直接与本轮得分比较，详见验收报告。
 
-- V-09：补强六类动态映射和未知类别边界测试。
-- U-05、U-06、U-07：完善 UART 分片/噪声恢复、ACK 丢失与幂等、重启状态转移测试。
-- O-04、S-08、I-02、I-03、I-04：处理已登记的释放期光电脉冲、运动事件边界及双端桌面回归。
+已有 **46 张唯一实拍**参与训练/开发，独立实拍验收仍为 **0**。页面检查曾出现漏检、错类和轮廓碎片；真实场景 99%、板上性能以及完整抓取分拣闭环均未验收。D-08、D-10 至 D-12 及整机任务继续跟踪这些缺口。
 
-需用户/队友提供输入或现场操作：
+导入图片调用本机模型；页面预置样例仍为首版对照。只打开离线 HTML 不会运行新模型，网页上传也不会自动保存图片或加入训练集。
 
-- P-05：确认最新 CAD 装配、相机标注和单位。
-- S-03/U-04：STM32 型号、板卡/原理图、现有工程、UART 引脚与 IO 电平。
-- C-02 至 C-10、D-04 至 D-12：最终相机、灯光、实物样本、标定点、抓取位置和板上模型测试数据。
-- T-01 至 T-05、O-03 至 O-09：索引传感器/舵机参数、光电与屏幕型号、落料波形及现场定位数据。
+## 仓库带了什么，没带什么
 
-完整任务、每项所需信息/分工/依赖/验收标准和当前下一步，以 [任务跟踪表.xlsx](任务跟踪表.xlsx) 为准；不要在本交接页复制整份任务清单。
+| 内容 | 新机器克隆后是否具备 |
+| --- | --- |
+| Python/C 代码、配置、测试、任务表、报告 | 是 |
+| 三版发布模型与推理所需权重、配置 | 是 |
+| `docs/stl_shape_v1_demo/` 的样例与离线页面 | 是，可用于首次上传验证 |
+| STL 物块、已提交的托盘模型与机械资料 | 是，最新装配版本仍按 P-05 核实 |
+| `dataset/` 的训练图、实拍、标注和冻结数据 | 否，未入库 |
+| `runs/segment/` 的完整训练与评估记录 | 否，未入库 |
+| `reference/` 的第三方资料与群聊归档 | 否，未入库 |
+| `.venv-vision/` 和原机器的服务/账号配置 | 否，新机器重建 |
+| RTX5060 双人操作手册 HTML/Markdown | 否，按用户要求保留在原机器本地 |
 
-## 验证命令
+仓库中的报告可能引用本地未入库的图片或实验记录；首次接手不需要这些材料。需要复现训练或完整历史评估时，再列出具体数据、标注、冻结清单、模型与实验记录的依赖，单独迁移。不要将重复或开发用实拍当作新的独立验收样本。
 
-在项目根目录运行：
+## 另一台 Windows 的安装步骤
+
+使用 **Windows x64、标准 CPython 3.14（非 free-threaded）和 CPU** 作为首次接手基线。安装 Git、Python 3.14 及承载 Opus 的开发工具，确认 `git --version` 和 `py -3.14 --version` 可用。模型名称以该平台实际提供的选项为准；本仓库不包含 API 密钥或模型服务配置。
+
+在存放项目的父目录打开 PowerShell，逐条执行。若某一步报错，先记录错误，不继续运行后面的步骤。
 
 ```powershell
-python -m unittest discover -s vision\tests -v
-gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware\stm32 firmware\stm32\test_sorting_protocol.c -o $env:TEMP\sorting_protocol_test.exe
-& $env:TEMP\sorting_protocol_test.exe
-gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware\stm32 firmware\stm32\sorting_controller.c firmware\stm32\test_sorting_controller.c -o $env:TEMP\sorting_controller_test.exe
-& $env:TEMP\sorting_controller_test.exe
-python scripts/update_task_tracker.py check
+git clone https://github.com/zhangyizhen123/smart-sorting.git
+cd smart-sorting
+git log -1 --oneline
+py -3.14 -m venv .venv-vision
+.\.venv-vision\Scripts\python.exe -m pip install --upgrade pip
+.\.venv-vision\Scripts\python.exe -m pip install -r vision/requirements-handoff.txt
+.\.venv-vision\Scripts\python.exe -m pip check
 ```
 
-若改动协议、状态机或依赖边界，请运行相关全套测试并在交接结果中写明实际命令和结果。任务状态只在证据满足完成标准后更新。
+若已经克隆过，先检查工作区，再在无本地冲突时使用 `git pull --ff-only`；不要覆盖已有改动或重建一个正在使用的环境。此处直接调用虚拟环境的 Python，无需更改 PowerShell 执行策略或激活脚本。
+
+`vision/requirements-handoff.txt` 锁定首次接手的 CPU 依赖，包含视觉环境和任务表所需的 XlsxWriter/openpyxl。旧 `requirements.txt`、`requirements-focused.txt` 和 `environment.yml` 属于历史训练配置，不与此清单叠加安装；CUDA、付费训练、MaixCAM SDK 和 C 编译器由后续具体任务另行配置。
+
+## 首轮检查与演示
+
+在项目根目录执行：
+
+```powershell
+.\.venv-vision\Scripts\python.exe -m unittest discover -s vision/tests -p "test_*.py"
+.\.venv-vision\Scripts\python.exe scripts/update_task_tracker.py check
+.\演示模型.cmd
+```
+
+截至本次交接，现有单元测试基线为 **97 项**；数量随后续开发变化，接手报告应记录实际运行数及失败项。`check` 校验 CSV、Markdown 与 Excel 一致，不会改写表格。
+
+浏览器打开后确认模型就绪，选择 `docs/stl_shape_v1_demo/samples/scene000000__frame000.jpg`，点击“识别形状”，确认能显示预测并切换校正/原始轮廓。保留启动窗口；结束后在该窗口按 Ctrl+C。
+
+需要核对服务时，在第二个 PowerShell 窗口运行：
+
+```powershell
+$sortingHealth = Invoke-RestMethod http://127.0.0.1:8765/api/health
+$sortingExpectedHash = (Get-FileHash models/trained/stl_shape_joint_v4/pipeline.json -Algorithm SHA256).Hash.ToLowerInvariant()
+if (-not $sortingHealth.ready -or $sortingHealth.pipeline_sha256 -ne $sortingExpectedHash) { throw '当前服务未加载预期默认模型' }
+```
+
+若 8765 已被占用，程序会打印实际端口，请将上面 URL 改为启动窗口中的地址。检查应针对本次启动的服务。需要不自动打开浏览器时，运行 `.\演示模型.cmd --no-open`。
+
+`.gitattributes` 保持已发布模型、配置和算法文件的哈希一致；不要通过禁用校验或重写预期哈希解决版本不匹配。`vision/tests/check_joint_default_launcher.py` 等历史专项检查依赖未入库的评估目录，不能代替上述可在纯克隆仓库中运行的首次检查。
+
+首次只要求 Python 测试、台账一致性和演示。修改 UART 或 STM32 状态机时，再安装支持 C11 的 GCC，在项目根目录运行相应主机测试：
+
+```powershell
+gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32 firmware/stm32/test_sorting_protocol.c -o "$env:TEMP/sorting_protocol_test.exe"
+& "$env:TEMP/sorting_protocol_test.exe"
+gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32 firmware/stm32/sorting_controller.c firmware/stm32/test_sorting_controller.c -o "$env:TEMP/sorting_controller_test.exe"
+& "$env:TEMP/sorting_controller_test.exe"
+```
+
+## 发给 Opus 的第一条消息
+
+在承载 Opus 的开发工具中打开克隆后的项目目录，再发送：
+
+```text
+请接手这个智能分拣项目，先完成项目理解和开发环境自检。
+
+依次阅读 CLAUDE.md、AGENTS.md、README.md、docs/Agent交接.md、
+docs/任务跟踪表.md 和 docs/联合优化模型验收结果.md。
+开始具体任务前，再读取 CSV 中该编号的完整字段。
+
+项目由 MaixCAM 2 负责视觉、STM32 负责运动控制；目标是九种形状、
+十种颜色，每轮六类组合动态分配六个盒。当前默认是联合优化模型，
+合成测试结果不能当作真实分拣准确率。训练数据和完整实验目录
+没有随 Git 仓库提供。
+
+检查 Git 状态，按交接文档建立 CPU 环境，运行现有单元测试和
+任务表检查，启动默认演示并验证仓库样例上传。
+
+首次回复请说明当前架构和默认版本、克隆提交号、实际检查结果、
+软件待办与现场硬件缺口，以及建议下一步推进的三个任务编号和理由。
+首次检查不启动新训练、不消费云资源、不替换默认模型。
+
+遵守任务表约定，完成并验证任务后立即更新证据和状态；不要推断
+线下硬件进度。需求有冲突时列出依据，不自行替用户确定规则。
+```
+
+## 后续工作与交接验收
+
+可先评估的三个软件任务：**U-05**（C UART 分片及噪声重同步）、**O-04**（释放期间光电脉冲捕获）、**V-09**（六类建表与未知类别边界）。先核对各行依赖与当前代码，首次接手只给出建议，后续按用户指定的任务推进。I-02 的跨端完整互操作测试依赖 U-05；不要忽略依赖直接标为完成。
+
+需用户/队友提供的资料仍包括最终 CAD 装配与相机位置（P-05）、STM32 型号及接线（S-03/U-04）、最终相机实拍与标定/颜色参数（C/D 系列）、转台/光电/显示屏参数及现场记录（T/O 系列）。独立实拍、板级部署、整机抓取分拣的验收分别记账。
+
+本机已在全新 Windows CPU 环境中安装全部 46 个锁定依赖，使用不含训练数据的 Git 检出通过 97 项单元测试、台账检查，以及默认启动器、模型哈希、页面和样例 API 上传验证；原始与校正轮廓均返回。详见[本机隔离验证记录](../runs/task_audit/2026-11-07_opus_handoff.json)。这不代替另一台机器的实际验收。
+
+**M-07** 记录交接材料和本机干净环境的复现验证；**M-08** 记录另一台 Windows 上的实际接手。目标机器需提供克隆提交号、Python 版本、安装/测试输出、演示结果及 Opus 首轮报告，取得证据后再更新 M-08。完整任务状态始终以任务表为准，不在本文复制整份台账。
