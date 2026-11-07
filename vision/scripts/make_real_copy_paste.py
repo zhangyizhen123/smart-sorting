@@ -130,7 +130,7 @@ def bank_from_review(review_dir: Path, out_path: Path, *, exclude_groups: tuple[
             "instances": instances, "backgrounds": backgrounds}
     if not instances or not backgrounds:
         raise ValueError("Bank needs at least one approved instance and one approved empty-tray background")
-    out_path.write_text(json.dumps(bank, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out_path.write_text(json.dumps(bank, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     return {"instances": len(instances), "backgrounds": len(backgrounds),
             "classes": dict(sorted(Counter(NAMES[i["class_id"]] for i in instances).items()))}
 
@@ -352,7 +352,7 @@ def generate(bank_path: Path, out: Path, cfg: dict) -> dict:
         Image.fromarray(image).save(buffer, format="JPEG", quality=cfg["jpeg_quality"], subsampling=0)
         image_path.write_bytes(buffer.getvalue())
         lines = [f"{p['class_id']} " + " ".join(f"{v:.8f}" for v in p["polygon"].ravel()) for p in placed]
-        label_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+        label_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8", newline="\n")
         class_counts.update(NAMES[p["class_id"]] for p in placed)
         groups = sorted({background.group_id, *(p["group_id"] for p in placed)})
         records.append({
@@ -365,7 +365,9 @@ def generate(bank_path: Path, out: Path, cfg: dict) -> dict:
             "group_id": "copy_paste:" + "+".join(groups), "final_test_eligible": False,
         })
     manifest = out / "manifest.jsonl"
-    manifest.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n", encoding="utf-8")
+    # LF on every OS: the frozen hashes then match whichever machine regenerates the same data.
+    manifest.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n", encoding="utf-8",
+                        newline="\n")
     summary = {
         "version": 1, "task": "D-34", "split": "train", "domain": "real_copy_paste",
         "bank_sha256": digest(bank_path), "bank_source": bank.get("source"),
@@ -377,7 +379,8 @@ def generate(bank_path: Path, out: Path, cfg: dict) -> dict:
         "final_test_eligible": False,
         "scope": "Training augmentation from approved real masks; not independent real validation or test data.",
     }
-    (out / "freeze.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (out / "freeze.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+                                     newline="\n")
     verify(out)
     return summary
 

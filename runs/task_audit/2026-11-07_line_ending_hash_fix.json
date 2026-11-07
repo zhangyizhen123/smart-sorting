@@ -1,0 +1,31 @@
+{
+  "tasks": ["D-36", "D-34"],
+  "passed": true,
+  "problem": "run_experiment.py hashed the config file's raw bytes as part of the experiment identity; a Windows Git checkout (core.autocrlf) turns the JSON into CRLF, so resuming in the same output directory, or running the same config on another machine, was refused. Files the new tools wrote (suite manifest, copy-paste manifest/labels/freeze, reports) used the OS line ending, so the same data hashed differently on Windows and Linux.",
+  "base_commit": "c92ea3f",
+  "fix": {
+    "config_identity": "config_sha256 = SHA-256 of the canonical parsed JSON (sorted keys, no whitespace); CRLF/LF, indentation and key order no longer count as changes, any semantic change still does",
+    "written_text": "run_experiment.write_text_lf and make_real_copy_paste writes use newline='\\n' on every OS",
+    "unchanged": "images, weights and model/algorithm files are still verified by raw bytes; existing release bundles and .gitattributes rules untouched"
+  },
+  "tests": {
+    "new": ["test_identity_ignores_line_endings_and_formatting", "test_written_files_use_lf_on_every_os (runner)",
+            "test_written_files_use_lf_on_every_os (copy-paste)"],
+    "python_total": 120, "result": "OK"
+  },
+  "mutation_checks": {
+    "config_hashed_by_bytes_again": "detected",
+    "runner_writer_os_newline": "detected",
+    "suite_manifest_os_newline": "detected",
+    "copy_paste_label_os_newline": "detected",
+    "copy_paste_manifest_os_newline": "detected",
+    "copy_paste_freeze_os_newline": "detected"
+  },
+  "real_check": {
+    "suite_v2": {"path": "dataset/stl_demo_samples_suite_v2", "manifest_sha256": "b042afa5ea2a4d708ffdb6a626aa8975edb5933ba0ec41ffa5bd647847b11c26", "manifest_cr_bytes": 0},
+    "reproduction_v2": {"first_version_cases_equal_to_archive": "12/12", "predictions": 23, "max_confidence_difference": 1.0e-6,
+                        "strict_first_version": 0.7778, "strict_joint_v5": 0.6111},
+    "crlf_config_resume": {"config_cr_bytes": 17, "accepted": true, "cache_records_recomputed": 0},
+    "v1_record": "kept as history; resuming v1 with the changed runner is refused by design (code hash changed) before any file is written"
+  }
+}

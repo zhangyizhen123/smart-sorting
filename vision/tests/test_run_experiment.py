@@ -165,6 +165,38 @@ class ExperimentTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'label changed'):
             self.run_exp()
 
+    def test_identity_ignores_line_endings_and_formatting(self):
+        self.run_exp()
+        reformatted = {key: self.cfg[key] for key in reversed(list(self.cfg))}
+        text = json.dumps(reformatted, indent=2).replace('\n', '\r\n')   # as a Windows CRLF checkout
+        path = self.root / 'exp.json'
+        path.write_bytes(text.encode('utf-8'))
+        self.assertIn(b'\r\n', path.read_bytes())
+        factory = Factory()
+        rx.run(path, root=self.root, predictor_factory=factory, quiet=True)
+        self.assertEqual(sum(p.calls for ps in factory.predictors.values() for p in ps), 0)
+        identity = json.loads((self.root / 'runs/experiments/exp_test/experiment.json').read_text(encoding='utf-8'))
+        self.assertEqual(identity['config_sha256'], rx.content_sha256(self.cfg))
+
+    def test_written_files_use_lf_on_every_os(self):
+        self.run_exp()
+        out = self.root / 'runs/experiments/exp_test'
+        written = [out / 'experiment.json', out / 'report.json', out / 'report.md',
+                   *(out / 'cache').rglob('*.json')]
+        self.assertGreater(len(written), 5)
+        for path in written:
+            self.assertNotIn(b'\r', path.read_bytes(), path)
+        images, labels = self.root / 'lf/images', self.root / 'lf/labels'
+        images.mkdir(parents=True)
+        labels.mkdir(parents=True)
+        Image.fromarray(draw_scene([0, 1])).save(images / 'x.png')
+        (labels / 'x.txt').write_text(label_text([0, 1]), encoding='utf-8')
+        Image.fromarray(draw_scene([3])).save(images / 'y.png')
+        (labels / 'y.txt').write_text(label_text([3]), encoding='utf-8')
+        rx.freeze_suite(images, labels, self.root / 'dataset/lf_suite', 'val', 'g')
+        for name in ('manifest.jsonl', 'freeze.json'):
+            self.assertNotIn(b'\r', (self.root / 'dataset/lf_suite' / name).read_bytes())
+
     def test_paired_bootstrap_is_deterministic_and_sensible(self):
         report = self.run_exp()
         comparison = report['comparisons'][0]

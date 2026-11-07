@@ -7,7 +7,9 @@ comparisons and gates. The run:
 1. verifies every suite (manifest hash and every image/label hash) and refuses leakage between the
    training manifest and any evaluation suite;
 2. records an experiment identity (config, suites, code hashes); a changed config or suite under the same
-   output directory is refused, so one directory always means one experiment;
+   output directory is refused, so one directory always means one experiment. The config is hashed by its
+   parsed content, so a CRLF/LF checkout or reformatting does not count as a change; files this tool
+   writes always use LF so their hashes match on Windows and Linux;
 3. optionally trains through vision/scripts/train_seg.py and freezes the checkpoint hashes;
 4. evaluates each candidate on each suite with the existing strict one-to-one scoring
    (evaluate_focused.score_records) and contour metrics (contour_quality / run_contour_audit), caching
@@ -28,6 +30,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -67,10 +70,15 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def write_text_lf(path: Path, text: str) -> None:
+    """Write UTF-8 with LF on every OS, so hashes of files this tool writes match across machines."""
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
 def write_json(path: Path, data) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".tmp")
-    temp.write_text(json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    write_text_lf(temp, json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
     temp.replace(path)
 
 
@@ -84,6 +92,11 @@ def inside(root: Path, value: str) -> Path:
 
 def canonical(data) -> str:
     return json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def content_sha256(data) -> str:
+    """Hash of the parsed content: unchanged by CRLF/LF checkouts, indentation or key order."""
+    return hashlib.sha256(canonical(data).encode("utf-8")).hexdigest()
 
 
 # ----------------------------------------------------------------------------- config
@@ -201,7 +214,7 @@ def freeze_suite(images: Path, labels: Path, out: Path, split: str, group: str, 
                      "image_sha256": image_hash, "label_sha256": digest(label_dest), "classes": classes,
                      "source_image": source.as_posix(), **(extra or {})})
     manifest = out / "manifest.jsonl"
-    manifest.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+    write_text_lf(manifest, "\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
     lock = {"version": 1, "manifest_sha256": digest(manifest), "images": len(rows), "split": split,
             "group_id": group, "instances": sum(len(r["classes"]) for r in rows), "created_at": now()}
     write_json(out / "freeze.json", lock)
@@ -544,7 +557,7 @@ def run(config_path: Path, root: Path = ROOT, predictor_factory=None, train_runn
         train_manifest = inside(root, cfg["train"]["manifest"])
         leakage = leakage_check(root, train_manifest, suites, cfg["suites"])
     experiment = {
-        "name": cfg["name"], "config": cfg, "config_sha256": digest(config_path),
+        "name": cfg["name"], "config": cfg, "config_sha256": content_sha256(cfg),
         "code_sha256": {name: digest(SCRIPTS / name) for name in CODE if (SCRIPTS / name).exists()},
         "suites": {name: {"dataset": cfg["suites"][name]["dataset"], "manifest_sha256": lock["manifest_sha256"],
                           "rows": len(rows), "role": cfg["suites"][name].get("role", "diagnostic")}
@@ -599,7 +612,7 @@ def run(config_path: Path, root: Path = ROOT, predictor_factory=None, train_runn
         "models_deployed": False,
     }
     write_json(out / "report.json", report)
-    (out / "report.md").write_text(render_markdown(report), encoding="utf-8")
+    write_text_lf(out / "report.md", render_markdown(report))
     return report
 
 

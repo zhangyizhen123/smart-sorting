@@ -206,6 +206,15 @@ class CopyPasteTests(unittest.TestCase):
                 self.assertEqual(labels, [])
                 self.assertEqual((out / row['label']).read_text(encoding='utf-8'), '')
 
+    def test_written_files_use_lf_on_every_os(self):
+        bank = build_bank(self.root / 'bank')
+        out = self.root / 'out'
+        mcp.generate(bank, out, clean_config(scenes=4, max_instances=3))
+        written = [out / 'manifest.jsonl', out / 'freeze.json', *(out / 'labels/train').glob('*.txt')]
+        self.assertTrue(any(p.stat().st_size for p in written if p.suffix == '.txt'))
+        for path in written:
+            self.assertNotIn(b'\r', path.read_bytes(), path)
+
     def test_config_rejects_unknown_keys(self):
         path = self.root / 'cfg.json'
         path.write_text(json.dumps({'scenes': 3, 'sceens': 4}), encoding='utf-8')

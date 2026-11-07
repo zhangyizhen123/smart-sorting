@@ -1,0 +1,479 @@
+{
+  "name": "stl_demo_reproduction_v2",
+  "purpose": "D-36 端到端核对（换行修复后重跑；v1 为修复前记录）：用统一入口重算仓库自带的 12 张首版演示样例（合成测试图），首版预测须与 docs/stl_shape_v1_demo/predictions.json 归档一致；同时评估默认 V5 组合。仅为工具核对，不是新的验收结论。",
+  "generated_at": "2026-11-07T17:17:44.799957+00:00",
+  "experiment_sha256": "4dab19b110951d0a6f7f22ccc3178e5e42aae20ef509258d1c63e9f625e759e0",
+  "training": null,
+  "candidates": {
+    "first_version": {
+      "kind": "model",
+      "path": "models/trained/stl_shape_v1/best.pt",
+      "model_sha256": "5c7dd29d84c0b71b3110ca0da0f101210648e85b7e9badded00c2ab09f3b057e",
+      "settings": {
+        "imgsz": 320,
+        "conf": 0.25,
+        "iou": 0.7,
+        "device": "cpu",
+        "agnostic_nms": false,
+        "retina_masks": true
+      }
+    },
+    "joint_v5": {
+      "kind": "pipeline",
+      "path": "models/trained/stl_shape_joint_v4/pipeline.json",
+      "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed"
+    }
+  },
+  "suites": {
+    "demo_samples": {
+      "dataset": "dataset/stl_demo_samples_suite_v2",
+      "manifest_sha256": "b042afa5ea2a4d708ffdb6a626aa8975edb5933ba0ec41ffa5bd647847b11c26",
+      "rows": 12,
+      "role": "diagnostic"
+    }
+  },
+  "summaries": {
+    "first_version": {
+      "demo_samples": {
+        "images": 12,
+        "instances": 18,
+        "strict_instance_score": 0.7777777777777778,
+        "missed_instances": 0,
+        "duplicate_detections": 5,
+        "spurious_detections": 0,
+        "false_positives_per_image": 0.0,
+        "whole_scene_accuracy": 0.6666666666666666,
+        "empty_images": 0,
+        "empty_images_with_detections": 0,
+        "empty_image_alarm_rate": null,
+        "boundary_iou_with_unmatched_zero": 0.6817600933684024,
+        "geometry": {
+          "matched_instances": 18,
+          "truth_instances": 18,
+          "unmatched_truth": 0,
+          "matched_mean_mask_iou": 0.9741707203303075,
+          "matched_mean_boundary_iou": 0.6817600933684024,
+          "boundary_iou_with_unmatched_zero": 0.6817600933684024,
+          "matched_mean_center_error_pixels": 0.49569375544523087,
+          "matched_p95_center_error_pixels": 0.612035927852167,
+          "matched_mean_center_error_normalized": 0.0010953387995848401
+        },
+        "per_class": {
+          "cylinder": {
+            "instances": 4,
+            "clean_correct": 3,
+            "clean_instance_accuracy": 0.75,
+            "missed": 0
+          },
+          "cube": {
+            "instances": 2,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "cuboid": {
+            "instances": 1,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "tri_prism": {
+            "instances": 1,
+            "clean_correct": 1,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "pent_prism": {
+            "instances": 1,
+            "clean_correct": 1,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "hex_prism": {
+            "instances": 3,
+            "clean_correct": 3,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "cone": {
+            "instances": 2,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "tetrahedron": {
+            "instances": 2,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "sphere": {
+            "instances": 2,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          }
+        },
+        "confusion_rows_true_cols_pred": [
+          [
+            3,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2
+          ]
+        ],
+        "scores_by_threshold": {
+          "0.5": {
+            "strict_instance_score": 0.7777777777777778,
+            "missed_instances": 0,
+            "duplicate_detections": 5,
+            "spurious_detections": 0
+          },
+          "0.75": {
+            "strict_instance_score": 0.7777777777777778,
+            "missed_instances": 0,
+            "duplicate_detections": 5,
+            "spurious_detections": 0
+          }
+        },
+        "median_inference_seconds": 0.11232740000559716,
+        "groups": {
+          "group_id": {
+            "stl_demo_samples": {
+              "images": 12,
+              "instances": 18,
+              "strict_instance_score": 0.7777777777777778,
+              "missed_instances": 0,
+              "spurious_detections": 0,
+              "empty_image_alarm_rate": null
+            }
+          }
+        }
+      }
+    },
+    "joint_v5": {
+      "demo_samples": {
+        "images": 12,
+        "instances": 18,
+        "strict_instance_score": 0.6111111111111112,
+        "missed_instances": 0,
+        "duplicate_detections": 0,
+        "spurious_detections": 0,
+        "false_positives_per_image": 0.0,
+        "whole_scene_accuracy": 0.5,
+        "empty_images": 0,
+        "empty_images_with_detections": 0,
+        "empty_image_alarm_rate": null,
+        "boundary_iou_with_unmatched_zero": 0.7875990676315713,
+        "geometry": {
+          "matched_instances": 18,
+          "truth_instances": 18,
+          "unmatched_truth": 0,
+          "matched_mean_mask_iou": 0.9823033419022659,
+          "matched_mean_boundary_iou": 0.7875990676315713,
+          "boundary_iou_with_unmatched_zero": 0.7875990676315713,
+          "matched_mean_center_error_pixels": 0.3521769812318454,
+          "matched_p95_center_error_pixels": 0.5450517899368402,
+          "matched_mean_center_error_normalized": 0.0007782085362713916
+        },
+        "per_class": {
+          "cylinder": {
+            "instances": 4,
+            "clean_correct": 3,
+            "clean_instance_accuracy": 0.75,
+            "missed": 0
+          },
+          "cube": {
+            "instances": 2,
+            "clean_correct": 1,
+            "clean_instance_accuracy": 0.5,
+            "missed": 0
+          },
+          "cuboid": {
+            "instances": 1,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "tri_prism": {
+            "instances": 1,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "pent_prism": {
+            "instances": 1,
+            "clean_correct": 1,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "hex_prism": {
+            "instances": 3,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 0.6666666666666666,
+            "missed": 0
+          },
+          "cone": {
+            "instances": 2,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "tetrahedron": {
+            "instances": 2,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "sphere": {
+            "instances": 2,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          }
+        },
+        "confusion_rows_true_cols_pred": [
+          [
+            3,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            2,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2
+          ]
+        ],
+        "scores_by_threshold": {
+          "0.5": {
+            "strict_instance_score": 0.6111111111111112,
+            "missed_instances": 0,
+            "duplicate_detections": 0,
+            "spurious_detections": 0
+          },
+          "0.75": {
+            "strict_instance_score": 0.6111111111111112,
+            "missed_instances": 0,
+            "duplicate_detections": 0,
+            "spurious_detections": 0
+          }
+        },
+        "median_inference_seconds": 0.7930733499961207,
+        "groups": {
+          "group_id": {
+            "stl_demo_samples": {
+              "images": 12,
+              "instances": 18,
+              "strict_instance_score": 0.6111111111111112,
+              "missed_instances": 0,
+              "spurious_detections": 0,
+              "empty_image_alarm_rate": null
+            }
+          }
+        }
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "candidate": "joint_v5",
+      "baseline": "first_version",
+      "suite": "demo_samples",
+      "unit": "image",
+      "units": 12,
+      "resamples": 2000,
+      "alpha": 0.05,
+      "delta": -0.16666666666666663,
+      "ci_low": -0.4212406015037594,
+      "ci_high": 0.06666666666666665
+    }
+  ],
+  "selection": null,
+  "gates": [],
+  "gates_status": "none",
+  "all_gates_passed": null,
+  "sealed_suites": [],
+  "models_deployed": false
+}
