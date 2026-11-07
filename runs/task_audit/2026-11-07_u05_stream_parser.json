@@ -1,0 +1,61 @@
+{
+  "task": "U-05",
+  "passed": true,
+  "scope": "Desktop host tests of the platform-independent C UART stream framer; no STM32 board, DMA or real UART link",
+  "base_commit": "43ae498",
+  "files": [
+    "firmware/stm32/sorting_stream.h",
+    "firmware/stm32/sorting_stream.c",
+    "firmware/stm32/test_sorting_stream.c"
+  ],
+  "design": {
+    "buffer_bytes": 136,
+    "allocation": "none (fixed buffer inside ss_stream_t)",
+    "resync_rule": "bad version / payload_len > 128 / CRC mismatch discards one byte and rescans buffered bytes (same as vision/runtime/protocol.py StreamDecoder)",
+    "idle_flush": "ss_stream_idle() releases a real frame held behind a false SS header when the line goes idle",
+    "diagnostics": ["frames_ok", "crc_errors", "length_errors", "version_errors", "discarded_bytes"],
+    "difference_from_python": "CRC-valid frames with an unknown message type are delivered so the controller can reply; Python drops them"
+  },
+  "compiler": "GCC 16.2.0 (w64devkit 2.11.0)",
+  "commands": {
+    "stream": "gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32 firmware/stm32/sorting_stream.c firmware/stm32/sorting_controller.c firmware/stm32/test_sorting_stream.c",
+    "stream_ubsan": "same flags plus -fsanitize=undefined -fsanitize-trap"
+  },
+  "results": {
+    "stream_tests": {"exit_code": 0, "output": "STM32 UART stream tests passed"},
+    "stream_tests_ubsan": {"exit_code": 0, "output": "STM32 UART stream tests passed"},
+    "protocol_tests": {"exit_code": 0, "output": "STM32 UART protocol tests passed"},
+    "controller_tests": {"exit_code": 0, "output": "STM32 controller tests passed"},
+    "python_unit_tests": {"exit_code": 0, "tests_run": 97, "result": "OK"}
+  },
+  "test_cases": [
+    "every chunk size 1..26 for a vision result frame",
+    "three back-to-back frames including a 128-byte payload in one feed",
+    "noise with lone/odd magic, wrong version and oversized lengths, then valid frame",
+    "CRC-corrupted frame followed by valid frame",
+    "false header (len 128) hiding a real frame: recovered by idle flush, or by padding",
+    "reset of a partial frame, NULL arguments, NULL handler",
+    "200 random frames (types 1-9, payload 0-128) with S-heavy noise and random 1-64 byte chunks; buffer always < 136",
+    "fragmented noisy vision result fed through the stream into sort_controller_accept_frame: fields decoded, state MOVE_TO_TARGET"
+  ],
+  "mutation_checks": {
+    "drop_whole_candidate_on_crc_error": "detected (exit 5)",
+    "skip_version_check": "detected (exit 3)",
+    "idle_flush_noop": "detected (exit 5)"
+  },
+  "python_parity_check": {
+    "method": "ad-hoc scratch script: same 258115-byte noisy stream (3000 frame slots, 5% bit-flipped frames) decoded by Python StreamDecoder and the C framer with different random chunking",
+    "valid_frames_sent": 2846,
+    "python_frames": 2846,
+    "c_frames": 2846,
+    "c_equals_python": true,
+    "python_equals_sent": true,
+    "c_stats": "ok=2846 crc=186 len=420 ver=5124 disc=54993",
+    "note": "Not a substitute for I-02 full field-level C/Python interoperability"
+  },
+  "not_covered": [
+    "STM32 DMA/interrupt wiring and IDLE detection timing (S-04)",
+    "Real cable noise while motors run (U-09)",
+    "Duplicate/late frame idempotency (U-06)"
+  ]
+}

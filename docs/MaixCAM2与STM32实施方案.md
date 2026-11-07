@@ -58,6 +58,8 @@ tray_x_mm:f32 | tray_y_mm:f32 | confidence:f32 | frame_id:u16
 
 转台保留连续旋转 360°舵机，索引传感器用于建立原点；六个盒位的舵机动作时间须逐一实测。上电先找索引，每轮从原点建立位置基准。光电等待超时则发送 `DROP_FAILED`；此类失败不设重试次数上限。急停、运动超时、限位异常和盒位定位错误进入锁存故障，必须复位后恢复。
 
+光电布防与释放期捕获（O-04）：转台对位阶段持续记录光路状态，只有在对位或释放期间看到光路畅通后才布防，持续遮挡（卡料、上一件残留）不会计为本件。夹爪释放期间也采样光电；去抖确认的落料先保留，等释放动作完成后才报告成功、更新显示并允许下一目标，防止松爪未完成就开始新动作。跨越释放结束时刻的遮挡脉冲连续计时，不会被清零。投放超时仍从释放完成开始计。前提是主循环在对位和释放期间持续调用 tick；短于采样周期的脉冲仍需 O-05 实测后决定是否改为中断捕获。
+
 显示屏只在经过软件去抖的光电成功事件后更新。显示内容由 STM32 根据 shape/color/bin ID 的本地表生成，不采信 MaixCAM 2 的成功计数。
 
 ## 当前代码
@@ -69,6 +71,7 @@ tray_x_mm:f32 | tray_y_mm:f32 | confidence:f32 | frame_id:u16
 - `vision/runtime/session.py`：每轮映射、单目标握手、成功计数和失败重拍/重试逻辑。
 - `vision/runtime/pipeline.py`：把模型适配器输出的实例、掩膜颜色样本和像素中心转换为稳定检测与 UART 目标。
 - `firmware/stm32/`：HAL 无关的协议头和状态机。电机、定时器、索引输入、光电输入、显示屏和 UART DMA 由具体 STM32 工程适配。
+- `firmware/stm32/sorting_stream.c/.h`：平台无关的 UART 字节流分帧（U-05）。任意分片、粘包、噪声、错误版本/长度/CRC 后都能重新同步，缓存固定为 136 字节；重同步规则与 Python `StreamDecoder` 一致。板上把中断或 DMA 收到的字节交给 `ss_stream_feed()`，回调中调用 `sort_controller_accept_frame()`；UART 空闲（IDLE）时调用 `ss_stream_idle()`，避免伪帧头卡住后面的真实帧。不要在中断和主循环里同时调用同一个解析器。
 
 桌面验证命令（需要 Python 3 和 GCC）：
 
@@ -78,6 +81,8 @@ gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware\stm32 firmware\stm32\tes
 & $env:TEMP\sorting_protocol_test.exe
 gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware\stm32 firmware\stm32\sorting_controller.c firmware\stm32\test_sorting_controller.c -o $env:TEMP\sorting_controller_test.exe
 & $env:TEMP\sorting_controller_test.exe
+gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware\stm32 firmware\stm32\sorting_stream.c firmware\stm32\sorting_controller.c firmware\stm32\test_sorting_stream.c -o $env:TEMP\sorting_stream_test.exe
+& $env:TEMP\sorting_stream_test.exe
 ```
 
 ## 配置与验收

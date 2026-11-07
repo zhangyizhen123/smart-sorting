@@ -105,6 +105,8 @@ gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32 firmware/stm32/tes
 & "$env:TEMP/sorting_protocol_test.exe"
 gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32 firmware/stm32/sorting_controller.c firmware/stm32/test_sorting_controller.c -o "$env:TEMP/sorting_controller_test.exe"
 & "$env:TEMP/sorting_controller_test.exe"
+gcc -std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32 firmware/stm32/sorting_stream.c firmware/stm32/sorting_controller.c firmware/stm32/test_sorting_stream.c -o "$env:TEMP/sorting_stream_test.exe"
+& "$env:TEMP/sorting_stream_test.exe"
 ```
 
 ## 发给 Opus 的第一条消息
@@ -136,7 +138,7 @@ docs/任务跟踪表.md 和 docs/联合优化模型验收结果.md。
 
 ## 后续工作与交接验收
 
-可先评估的三个软件任务：**U-05**（C UART 分片及噪声重同步）、**O-04**（释放期间光电脉冲捕获）、**V-09**（六类建表与未知类别边界）。先核对各行依赖与当前代码，首次接手只给出建议，后续按用户指定的任务推进。I-02 的跨端完整互操作测试依赖 U-05；不要忽略依赖直接标为完成。
+可先评估的三个软件任务：**U-05**（C UART 分片及噪声重同步，2026-11-07 桌面实现已完成，见 `firmware/stm32/sorting_stream.c`）、**O-04**（释放期间光电脉冲捕获）、**V-09**（六类建表与未知类别边界）。先核对各行依赖与当前代码，首次接手只给出建议，后续按用户指定的任务推进。I-02 的跨端完整互操作测试依赖 U-05；不要忽略依赖直接标为完成。
 
 需用户/队友提供的资料仍包括最终 CAD 装配与相机位置（P-05）、STM32 型号及接线（S-03/U-04）、最终相机实拍与标定/颜色参数（C/D 系列）、转台/光电/显示屏参数及现场记录（T/O 系列）。独立实拍、板级部署、整机抓取分拣的验收分别记账。
 

@@ -1,0 +1,75 @@
+{
+  "task": "M-08",
+  "passed": true,
+  "scope": "Target Windows machine first handoff check by Claude Opus 5.5 (CPU, no training, default model unchanged)",
+  "remote_machine_acceptance": true,
+  "commit": "43ae498",
+  "working_tree_clean_at_start": true,
+  "machine": {
+    "os": "Windows 11 Enterprise LTSC 2024 Evaluation 10.0.26100",
+    "arch": "AMD64"
+  },
+  "tooling_installed": {
+    "python": {
+      "version": "3.14.10 (tags/v3.14.10:b703b2c) MSC v.1944 64 bit (AMD64), GIL enabled",
+      "source": "https://www.nuget.org/api/v2/package/python/3.14.10 (official CPython NuGet package)",
+      "authenticode": "Valid, Python Software Foundation",
+      "install_dir": "%LOCALAPPDATA%\\Programs\\Python314",
+      "note": "python.org python-3.14.10-amd64.exe (signature valid) failed with MSI 0x80070003 (core.msi missing from Package Cache) twice; used the NuGet build of the same release instead."
+    },
+    "gcc": {
+      "version": "GCC 16.2.0",
+      "source": "https://github.com/skeeto/w64devkit/releases/download/v2.11.0/w64devkit-x64-2.11.0.7z.exe",
+      "install_dir": "%LOCALAPPDATA%\\Programs\\w64devkit"
+    }
+  },
+  "dependency_install": {
+    "command": ".venv-vision\\Scripts\\python.exe -m pip install -r vision/requirements-handoff.txt",
+    "exit_code": 0,
+    "pip_version": "26.3",
+    "locked_packages_installed": 46,
+    "pip_check": "No broken requirements found."
+  },
+  "unit_tests": {
+    "command": ".venv-vision\\Scripts\\python.exe -m unittest discover -s vision/tests -p \"test_*.py\"",
+    "exit_code": 0,
+    "tests_run": 97,
+    "result": "OK"
+  },
+  "task_tracker": {
+    "command": ".venv-vision\\Scripts\\python.exe scripts/update_task_tracker.py check",
+    "exit_code": 0,
+    "output": "OK: 129 tasks; unique IDs; valid dependencies; Markdown and Excel synchronized"
+  },
+  "c_host_tests": {
+    "flags": "-std=c11 -Wall -Wextra -Werror -pedantic -Ifirmware/stm32",
+    "protocol": {"compile_exit": 0, "run_exit": 0, "output": "STM32 UART protocol tests passed"},
+    "controller": {"compile_exit": 0, "run_exit": 0, "output": "STM32 controller tests passed"}
+  },
+  "demo": {
+    "command": "演示模型.cmd --no-open",
+    "ready_line": "Demo ready: http://127.0.0.1:8765/",
+    "health_ready": true,
+    "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed",
+    "pipeline_sha256_matches_file": true,
+    "model_sha256": "d51cc9c95e9949691f9aafc8bf7efd5adf746b2578f3e7a0b755553a127f36e0",
+    "page_status": 200,
+    "page_has_file_input": true,
+    "sample": "docs/stl_shape_v1_demo/samples/scene000000__frame000.jpg",
+    "sample_sha256": "989acaadfcffa7ed750b382c7d1b6043d3e46c61011173ce13cff0bda5f5ab54",
+    "upload_method": "POST /api/predict application/octet-stream (API level, not a browser click)",
+    "detections": 1,
+    "top_class_id": 0,
+    "top_confidence": 0.934348,
+    "corrected_contours_returned": true,
+    "raw_model_contours_returned": true,
+    "server_stopped": true
+  },
+  "hashes_match_source_machine_record": "runs/task_audit/2026-11-07_opus_handoff.json (pipeline, model, sample identical)",
+  "not_covered": [
+    "Browser click-through of the upload UI (API upload verified instead)",
+    "Training data, runs/segment, reference/ not present by design",
+    "Board deployment, real camera, STM32 hardware and full-system acceptance"
+  ],
+  "recommended_next_tasks": ["U-05", "O-04", "V-09"]
+}

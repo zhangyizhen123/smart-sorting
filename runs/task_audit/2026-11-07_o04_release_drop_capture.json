@@ -1,0 +1,52 @@
+{
+  "task": "O-04",
+  "passed": true,
+  "scope": "Desktop mock-time tests of the STM32 controller drop-sensor logic; no real sensor, pulse widths or release timing (O-05)",
+  "base_commit": "43ae498",
+  "files": [
+    "firmware/stm32/sorting_controller.c",
+    "firmware/stm32/sorting_controller.h",
+    "firmware/stm32/test_sorting_controller.c"
+  ],
+  "problem_reproduced": {
+    "description": "Old controller ignored the sensor during SORT_RELEASE and reset the watch when the release finished, so a part that fell during release timed out as DROP_FAILED",
+    "old_controller_with_new_tests_exit": 113,
+    "meaning": "test_drop_during_release_is_counted_after_release step 3 failed on HEAD code"
+  },
+  "behaviour": [
+    "SORT_ROTATE_BIN: latest beam state tracked; watch armed only by a clear beam",
+    "SORT_RELEASE: sensor sampled with the same debounce; a confirmed drop is held (drop_confirmed)",
+    "Release complete: held drop reported (count, display, DROP_SUCCESS) only now; otherwise SORT_WAIT_DROP_SENSOR with sensor state carried over",
+    "Drop timeout still starts at release completion (O-02 unchanged)",
+    "Beam blocked throughout alignment/release/wait is never counted",
+    "drop_confirmed cleared on new target, bin alignment, success and failure"
+  ],
+  "new_tests": [
+    "test_drop_during_release_is_counted_after_release (incl. bounce counted once, no report before release ends, no leak into next target)",
+    "test_pulse_straddling_release_end_counts_once",
+    "test_beam_blocked_before_release_is_not_a_drop",
+    "test_beam_clears_during_release_then_drop_counts",
+    "test_short_glitch_during_release_is_not_a_drop"
+  ],
+  "results": {
+    "controller_tests": {"exit_code": 0, "output": "STM32 controller tests passed", "existing_tests_unchanged": 5, "new_tests": 5},
+    "controller_tests_ubsan": {"exit_code": 0},
+    "protocol_tests": {"exit_code": 0},
+    "stream_tests": {"exit_code": 0},
+    "python_unit_tests": {"exit_code": 0, "tests_run": 97}
+  },
+  "mutation_checks": {
+    "no_tracking_in_rotate_bin": "detected (exit 123)",
+    "reset_watch_at_release_end": "detected (exit 134)",
+    "report_success_during_release": "detected (exit 123)",
+    "drop_confirmed_never_cleared": "detected (exit 119)",
+    "arm_while_blocked": "detected (exit 12)",
+    "skip_success_in_wait_state": "detected (exit 14)"
+  },
+  "compiler": "GCC 16.2.0, -std=c11 -Wall -Wextra -Werror -pedantic",
+  "not_covered": [
+    "Pulses shorter than the tick period (needs O-05 waveform data; may require interrupt capture)",
+    "Real release duration, sensor polarity and mounting (O-03, O-05, S-06)",
+    "Stuck beam / wrong bin diagnosis policy (O-06, R-09)"
+  ]
+}

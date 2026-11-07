@@ -19,11 +19,50 @@ static void request_rescan(const sort_hal_t *hal) {
     if (hal->request_rescan != NULL) hal->request_rescan(hal->ctx);
 }
 
+static void clear_drop_watch(sort_controller_t *controller) {
+    controller->sensor_was_active = false;
+    controller->drop_sensor_armed = false;
+    controller->drop_confirmed = false;
+}
+
+/* Drop-sensor sampling shared by SORT_RELEASE and SORT_WAIT_DROP_SENSOR.
+ * The watch is armed only by a clear sample taken after the bin started
+ * aligning, so a beam that stays blocked (stuck object, previous part) can
+ * never count as the current drop. A pulse may start, or even finish, while
+ * the gripper is still releasing. */
+static void sample_drop_sensor(sort_controller_t *controller, uint32_t now_ms,
+                               bool drop_sensor_active) {
+    if (controller->drop_confirmed) return;
+    if (!drop_sensor_active) {
+        controller->drop_sensor_armed = true;
+        controller->sensor_was_active = false;
+    } else if (controller->drop_sensor_armed) {
+        if (!controller->sensor_was_active) {
+            controller->sensor_was_active = true;
+            controller->sensor_active_since_ms = now_ms;
+        } else if (elapsed(now_ms, controller->sensor_active_since_ms) >= controller->sensor_debounce_ms) {
+            controller->drop_confirmed = true;
+        }
+    }
+}
+
+static void report_drop_success(sort_controller_t *controller, const sort_hal_t *hal,
+                                uint32_t now_ms) {
+    controller->success_count++;
+    if (hal->display_drop != NULL) {
+        hal->display_drop(hal->ctx, controller->target.shape_id,
+                          controller->target.color_id, controller->target.bin_id,
+                          controller->success_count);
+    }
+    send_status(hal, SS_MSG_DROP_SUCCESS, SS_STATUS_OK, controller->operation_sequence);
+    clear_drop_watch(controller);
+    enter(controller, SORT_NOTIFY_SUCCESS, now_ms);
+}
+
 static void fail_drop(sort_controller_t *controller, const sort_hal_t *hal,
                       uint32_t now_ms) {
     controller->target_valid = false;
-    controller->sensor_was_active = false;
-    controller->drop_sensor_armed = false;
+    clear_drop_watch(controller);
     send_status(hal, SS_MSG_DROP_FAILED, SS_STATUS_SENSOR_TIMEOUT,
                 controller->operation_sequence);
     enter(controller, SORT_NOTIFY_FAILURE, now_ms);
@@ -80,6 +119,7 @@ int sort_controller_accept_frame(sort_controller_t *controller,
         return -3;
     }
     controller->target_valid = true;
+    clear_drop_watch(controller);
     controller->operation_sequence++;
     send_status(hal, SS_MSG_ACK, SS_STATUS_OK, controller->operation_sequence);
     send_status(hal, SS_MSG_ACTION_STARTED, SS_STATUS_OK, controller->operation_sequence);
@@ -116,18 +156,26 @@ void sort_controller_motion_complete(sort_controller_t *controller,
         enter(controller, SORT_MOVE_TO_DROP, now_ms);
         break;
     case SORT_MOVE_TO_DROP:
+        clear_drop_watch(controller);
         if (hal->rotate_to_bin != NULL) hal->rotate_to_bin(hal->ctx, controller->target.bin_id);
         enter(controller, SORT_ROTATE_BIN, now_ms);
         break;
     case SORT_ROTATE_BIN:
+        /* Keep the arm state sampled during alignment: a fast part can block
+         * the beam before the first tick in SORT_RELEASE. */
         if (hal->gripper_release != NULL) hal->gripper_release(hal->ctx);
         enter(controller, SORT_RELEASE, now_ms);
         break;
     case SORT_RELEASE:
+        /* The drop timeout still starts when the release finishes (O-02).
+         * Sensor state carries over so a pulse that straddles the end of the
+         * release is neither lost nor restarted. */
         controller->drop_started_ms = now_ms;
-        controller->sensor_was_active = false;
-        controller->drop_sensor_armed = false;
-        enter(controller, SORT_WAIT_DROP_SENSOR, now_ms);
+        if (controller->drop_confirmed) {
+            report_drop_success(controller, hal, now_ms);
+        } else {
+            enter(controller, SORT_WAIT_DROP_SENSOR, now_ms);
+        }
         break;
     default:
         break;
@@ -148,30 +196,22 @@ void sort_controller_tick(sort_controller_t *controller, const sort_hal_t *hal,
     case SORT_HOME_XY:
         if (xy_home) sort_controller_motion_complete(controller, hal, now_ms);
         break;
+    case SORT_ROTATE_BIN:
+        /* The gripper still holds the part: track the latest beam state so
+         * only a clear beam before the drop can arm the watch. */
+        controller->drop_sensor_armed = !drop_sensor_active;
+        controller->sensor_was_active = false;
+        break;
+    case SORT_RELEASE:
+        /* Capture a drop during the release motion, but report it only after
+         * the release completes so no new target can start mid-release. */
+        sample_drop_sensor(controller, now_ms, drop_sensor_active);
+        break;
     case SORT_WAIT_DROP_SENSOR:
-        /* Arm only after the beam is clear, so a blocked sensor cannot count
-         * the previous object as the current drop. */
-        if (!drop_sensor_active) {
-            controller->drop_sensor_armed = true;
-            controller->sensor_was_active = false;
-        } else if (controller->drop_sensor_armed) {
-            if (!controller->sensor_was_active) {
-                controller->sensor_was_active = true;
-                controller->sensor_active_since_ms = now_ms;
-            } else if (elapsed(now_ms, controller->sensor_active_since_ms) >= controller->sensor_debounce_ms) {
-                controller->success_count++;
-                if (hal->display_drop != NULL) {
-                    hal->display_drop(hal->ctx, controller->target.shape_id,
-                                      controller->target.color_id, controller->target.bin_id,
-                                      controller->success_count);
-                }
-                send_status(hal, SS_MSG_DROP_SUCCESS, SS_STATUS_OK,
-                            controller->operation_sequence);
-                enter(controller, SORT_NOTIFY_SUCCESS, now_ms);
-            }
-        }
-        if (controller->state == SORT_WAIT_DROP_SENSOR &&
-            elapsed(now_ms, controller->drop_started_ms) >= controller->drop_timeout_ms) {
+        sample_drop_sensor(controller, now_ms, drop_sensor_active);
+        if (controller->drop_confirmed) {
+            report_drop_success(controller, hal, now_ms);
+        } else if (elapsed(now_ms, controller->drop_started_ms) >= controller->drop_timeout_ms) {
             fail_drop(controller, hal, now_ms);
         }
         break;

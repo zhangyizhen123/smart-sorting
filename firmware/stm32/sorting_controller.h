@@ -67,6 +67,9 @@ typedef struct {
     bool target_valid;
     bool sensor_was_active;
     bool drop_sensor_armed;
+    /* A debounced drop seen while the gripper is still releasing; reported
+     * once the release motion completes (O-04). */
+    bool drop_confirmed;
     bool fault_latched;
 } sort_controller_t;
 

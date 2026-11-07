@@ -124,6 +124,145 @@ static int start_drop(sort_controller_t *controller, const sort_hal_t *hal,
            controller->drop_started_ms == release_completed_ms;
 }
 
+/* Bring an accepted target to SORT_ROTATE_BIN at 160 ms (motion timeout
+ * 2000 ms, drop timeout 100 ms, debounce 20 ms from boot_to_wait_target). */
+static int advance_to_rotate(sort_controller_t *controller, const sort_hal_t *hal) {
+    uint8_t raw[SS_MAX_FRAME_SIZE];
+    size_t length = make_target_frame(raw, sizeof(raw));
+    if (sort_controller_accept_frame(controller, hal, raw, (uint16_t)length, 120u) != 0) return 0;
+    sort_controller_motion_complete(controller, hal, 125u); /* at target -> descend */
+    sort_controller_motion_complete(controller, hal, 130u); /* close */
+    sort_controller_motion_complete(controller, hal, 140u); /* lift */
+    sort_controller_motion_complete(controller, hal, 150u); /* move to drop */
+    sort_controller_motion_complete(controller, hal, 160u); /* at drop -> align bin */
+    return controller->state == SORT_ROTATE_BIN;
+}
+
+static void tick_range(sort_controller_t *controller, const sort_hal_t *hal,
+                       uint32_t from_ms, uint32_t to_ms, bool active) {
+    uint32_t t;
+    for (t = from_ms; t <= to_ms; t += 5u) sort_controller_tick(controller, hal, t, false, false, active);
+}
+
+static unsigned count_status(const mock_hal_t *mock, uint8_t type) {
+    unsigned i, n = 0u;
+    for (i = 0; i < mock->status_count && i < 16u; ++i) n += mock->status_type[i] == type;
+    return n;
+}
+
+static int test_drop_during_release_is_counted_after_release(void) {
+    mock_hal_t mock = {0};
+    sort_hal_t hal = make_hal(&mock);
+    sort_controller_t controller;
+    boot_to_wait_target(&controller, &hal, 2000u);
+    if (!advance_to_rotate(&controller, &hal)) return 1;
+    tick_range(&controller, &hal, 165u, 175u, false);       /* beam clear while aligning */
+    sort_controller_motion_complete(&controller, &hal, 180u); /* start release */
+    if (controller.state != SORT_RELEASE) return 2;
+    tick_range(&controller, &hal, 185u, 215u, true);        /* part falls through */
+    if (!controller.drop_confirmed) return 13;              /* first pulse alone counts */
+    tick_range(&controller, &hal, 220u, 245u, false);
+    tick_range(&controller, &hal, 250u, 280u, true);        /* second pulse: bounce */
+    tick_range(&controller, &hal, 285u, 395u, false);
+    /* Nothing is reported and no new motion starts until the release ends. */
+    if (controller.state != SORT_RELEASE || !controller.drop_confirmed) return 3;
+    if (mock.display_count != 0u || count_status(&mock, SS_MSG_DROP_SUCCESS) != 0u) return 4;
+    sort_controller_motion_complete(&controller, &hal, 400u); /* release done */
+    if (controller.success_count != 1u || mock.display_count != 1u) return 5;
+    if (count_status(&mock, SS_MSG_DROP_SUCCESS) != 1u) return 6;
+    sort_controller_tick(&controller, &hal, 405u, false, false, false);
+    if (controller.state != SORT_WAIT_TARGET || mock.rescan_count != 1u) return 7;
+    if (count_status(&mock, SS_MSG_DROP_FAILED) != 0u || mock.move_count != 1u) return 8;
+
+    /* The confirmation must not leak into the next target. */
+    {
+        uint8_t raw[SS_MAX_FRAME_SIZE];
+        size_t length = make_target_frame(raw, sizeof(raw));
+        uint32_t t;
+        if (sort_controller_accept_frame(&controller, &hal, raw, (uint16_t)length, 600u) != 0) return 9;
+        for (t = 600u; t <= 640u; t += 10u) sort_controller_motion_complete(&controller, &hal, t);
+        if (controller.state != SORT_ROTATE_BIN || controller.drop_confirmed) return 9;
+    }
+    tick_range(&controller, &hal, 645u, 655u, false);
+    sort_controller_motion_complete(&controller, &hal, 660u);
+    sort_controller_motion_complete(&controller, &hal, 880u);
+    if (controller.state != SORT_WAIT_DROP_SENSOR) return 10;
+    tick_range(&controller, &hal, 885u, 980u, false);
+    if (controller.state != SORT_WAIT_TARGET || controller.success_count != 1u) return 11;
+    if (count_status(&mock, SS_MSG_DROP_FAILED) != 1u) return 12;
+    return 0;
+}
+
+static int test_pulse_straddling_release_end_counts_once(void) {
+    mock_hal_t mock = {0};
+    sort_hal_t hal = make_hal(&mock);
+    sort_controller_t controller;
+    boot_to_wait_target(&controller, &hal, 2000u);
+    if (!advance_to_rotate(&controller, &hal)) return 1;
+    tick_range(&controller, &hal, 165u, 175u, false);
+    sort_controller_motion_complete(&controller, &hal, 180u);
+    tick_range(&controller, &hal, 185u, 385u, false);
+    tick_range(&controller, &hal, 390u, 395u, true);        /* block starts mid-release */
+    sort_controller_motion_complete(&controller, &hal, 400u);
+    if (controller.state != SORT_WAIT_DROP_SENSOR || controller.drop_started_ms != 400u) return 2;
+    sort_controller_tick(&controller, &hal, 405u, false, false, true);
+    if (controller.state != SORT_WAIT_DROP_SENSOR) return 3; /* 15 ms < debounce */
+    sort_controller_tick(&controller, &hal, 410u, false, false, true);
+    if (controller.state != SORT_NOTIFY_SUCCESS && controller.state != SORT_WAIT_TARGET) return 4;
+    if (controller.success_count != 1u || mock.display_count != 1u) return 5;
+    return 0;
+}
+
+static int test_beam_blocked_before_release_is_not_a_drop(void) {
+    mock_hal_t mock = {0};
+    sort_hal_t hal = make_hal(&mock);
+    sort_controller_t controller;
+    boot_to_wait_target(&controller, &hal, 2000u);
+    if (!advance_to_rotate(&controller, &hal)) return 1;
+    tick_range(&controller, &hal, 165u, 175u, true);        /* stuck part already in beam */
+    sort_controller_motion_complete(&controller, &hal, 180u);
+    tick_range(&controller, &hal, 185u, 395u, true);
+    sort_controller_motion_complete(&controller, &hal, 400u);
+    tick_range(&controller, &hal, 405u, 500u, true);
+    if (controller.state != SORT_WAIT_TARGET || controller.success_count != 0u) return 2;
+    if (mock.display_count != 0u || count_status(&mock, SS_MSG_DROP_FAILED) != 1u) return 3;
+    return 0;
+}
+
+static int test_beam_clears_during_release_then_drop_counts(void) {
+    mock_hal_t mock = {0};
+    sort_hal_t hal = make_hal(&mock);
+    sort_controller_t controller;
+    boot_to_wait_target(&controller, &hal, 2000u);
+    if (!advance_to_rotate(&controller, &hal)) return 1;
+    tick_range(&controller, &hal, 165u, 175u, true);        /* bin wall / stale block */
+    sort_controller_motion_complete(&controller, &hal, 180u);
+    tick_range(&controller, &hal, 185u, 185u, true);
+    tick_range(&controller, &hal, 190u, 195u, false);       /* beam clears: watch armed */
+    tick_range(&controller, &hal, 200u, 230u, true);        /* real drop */
+    sort_controller_motion_complete(&controller, &hal, 400u);
+    if (controller.success_count != 1u || mock.display_count != 1u) return 2;
+    return 0;
+}
+
+static int test_short_glitch_during_release_is_not_a_drop(void) {
+    mock_hal_t mock = {0};
+    sort_hal_t hal = make_hal(&mock);
+    sort_controller_t controller;
+    boot_to_wait_target(&controller, &hal, 2000u);
+    if (!advance_to_rotate(&controller, &hal)) return 1;
+    tick_range(&controller, &hal, 165u, 175u, false);
+    sort_controller_motion_complete(&controller, &hal, 180u);
+    tick_range(&controller, &hal, 185u, 195u, true);        /* 10 ms < 20 ms debounce */
+    tick_range(&controller, &hal, 200u, 395u, false);
+    sort_controller_motion_complete(&controller, &hal, 400u);
+    if (controller.state != SORT_WAIT_DROP_SENSOR || controller.drop_confirmed) return 2;
+    tick_range(&controller, &hal, 405u, 500u, false);
+    if (controller.state != SORT_WAIT_TARGET || controller.success_count != 0u) return 3;
+    if (count_status(&mock, SS_MSG_DROP_FAILED) != 1u) return 4;
+    return 0;
+}
+
 static int test_debounced_drop_updates_display_once(void) {
     mock_hal_t mock = {0};
     sort_hal_t hal = make_hal(&mock);
@@ -235,6 +374,16 @@ int main(void) {
     if (result != 0) return 70 + result;
     result = test_target_is_rejected_until_homing_finishes();
     if (result != 0) return 90 + result;
+    result = test_drop_during_release_is_counted_after_release();
+    if (result != 0) return 110 + result;
+    result = test_pulse_straddling_release_end_counts_once();
+    if (result != 0) return 130 + result;
+    result = test_beam_blocked_before_release_is_not_a_drop();
+    if (result != 0) return 150 + result;
+    result = test_beam_clears_during_release_then_drop_counts();
+    if (result != 0) return 170 + result;
+    result = test_short_glitch_during_release_is_not_a_drop();
+    if (result != 0) return 190 + result;
     puts("STM32 controller tests passed");
     return 0;
 }
