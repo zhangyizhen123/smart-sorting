@@ -1,0 +1,17 @@
+{
+  "name": "stl_demo_reproduction_v1",
+  "purpose": "D-36 端到端核对：用统一入口重算仓库自带的 12 张首版演示样例（合成测试图），首版预测须与 docs/stl_shape_v1_demo/predictions.json 归档一致；同时评估默认 V5 组合。仅为工具核对，不是新的验收结论。",
+  "output": "runs/experiments/stl_demo_reproduction_v1",
+  "seed": 42,
+  "threads": 2,
+  "thresholds": [0.5, 0.75],
+  "suites": {
+    "demo_samples": {"dataset": "dataset/stl_demo_samples_suite_v1", "role": "diagnostic", "group_fields": ["group_id"]}
+  },
+  "candidates": {
+    "first_version": {"model": "models/trained/stl_shape_v1/best.pt",
+                      "settings": {"imgsz": 320, "conf": 0.25, "iou": 0.7, "device": "cpu", "agnostic_nms": false, "retina_masks": true}},
+    "joint_v5": {"pipeline": "models/trained/stl_shape_joint_v4/pipeline.json"}
+  },
+  "comparisons": [{"candidate": "joint_v5", "baseline": "first_version", "suite": "demo_samples", "unit": "image", "resamples": 2000}]
+}

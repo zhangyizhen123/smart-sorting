@@ -37,3 +37,6 @@ venv/
 Thumbs.db
 *.log
 **/~$*
+
+# ---- 统一实验入口的逐图缓存（可由 run_experiment.py 重算）----
+runs/experiments/*/cache/

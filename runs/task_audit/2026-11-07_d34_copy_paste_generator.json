@@ -1,0 +1,45 @@
+{
+  "task": "D-34",
+  "status_after": "部分完成",
+  "passed": true,
+  "scope": "Generator code and unit tests on synthetic fixtures. dataset/real is not on this machine, so no copy-paste dataset was generated from the 46 approved photographs and no training was started.",
+  "base_commit": "984f658",
+  "files": [
+    "vision/scripts/make_real_copy_paste.py",
+    "vision/configs/real_copy_paste_v1.json",
+    "vision/tests/test_real_copy_paste.py"
+  ],
+  "design": {
+    "sources": "bank JSON built from the current approved review snapshot (same pointer, hash and validate_review checks as prepare_real_training); approved instances become cutouts, approved empty-tray photos become backgrounds",
+    "leakage_guard": "bank split must be train; instances/backgrounds in held_out_groups are refused; bank build can exclude validation/test leakage groups",
+    "labels": "exported from the pasted approved mask with prepare_real_training.mask_polygon (one component, no holes, round-trip IoU >= 0.995)",
+    "placement": "non-overlapping with min gap, fully inside optional tray ROI polygon, relative object size kept from the source photo with jitter",
+    "augmentation": "horizontal flip, rotation <= 10 deg, gain 0.9-1.1, edge feathering, one soft shadow direction per scene; label stays the hard mask",
+    "sampling": "inverse class frequency so rare real classes are pasted about as often as common ones",
+    "outputs": "images/train, labels/train, manifest.jsonl with per-instance provenance, freeze.json with hashes; refuses nonempty output; verify re-hashes; final_test_eligible=false everywhere",
+    "config": "vision/configs/real_copy_paste_v1.json holds starting values only; to be chosen on independent real validation (D-07), never on test data"
+  },
+  "results": {
+    "new_tests": {"count": 9, "result": "OK"},
+    "python_unit_tests": {"tests_run": 106, "result": "OK"},
+    "task_tracker_check": "OK: 134 tasks"
+  },
+  "mutation_checks": {
+    "no_overlap_check": "detected",
+    "no_roi_check": "detected",
+    "no_heldout_instance_check": "detected (after adding separate instance/background cases; first run survived because the background check also fired)",
+    "no_heldout_background_check": "detected",
+    "uniform_class_weights": "detected",
+    "label_shifted_from_pasted_pixels": "detected",
+    "no_train_split_check": "detected",
+    "verify_skips_hashes": "detected",
+    "review_bank_keeps_excluded_group": "detected",
+    "review_bank_keeps_pending_image": "detected (raises on the unapproved mask)"
+  },
+  "visual_check": "Default config on fixtures: label contours coincide with pasted objects, shadows faint, no overlaps, one empty scene; preview kept in session scratchpad only (fixtures, not real data)",
+  "not_done": [
+    "Generate from dataset/real approved snapshot (needs data migration or running on the original machine)",
+    "Visual spot check of real pasted scenes (seams, scale, shadow realism)",
+    "Effect on a model: requires independent real validation sessions (D-05/D-07) and the D-36 runner"
+  ]
+}

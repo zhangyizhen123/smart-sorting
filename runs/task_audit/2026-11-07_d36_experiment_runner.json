@@ -1,0 +1,41 @@
+{
+  "task": "D-36",
+  "status_after": "已完成",
+  "passed": true,
+  "scope": "Config-driven experiment entry and standard evaluation suite. Evaluated on in-repository data only; no training was run (training path exercised with a substitute runner), no default model changed, no cloud resources used.",
+  "base_commit": "984f658",
+  "files": [
+    "vision/scripts/run_experiment.py",
+    "vision/tests/test_run_experiment.py",
+    "vision/configs/experiments/stl_demo_reproduction_v1.json",
+    "docs/统一实验入口说明.md",
+    ".gitignore (runs/experiments/*/cache/)"
+  ],
+  "reused": ["evaluate_focused.score_records / masks_from_truth / digest", "contour_quality.pairwise_geometry",
+             "run_contour_audit.geometry_summary", "shape_refiner.read_polygons / PairwiseRefiner",
+             "pipeline_v2..v5 runtimes via predict_native", "train_seg.py"],
+  "unit_tests": {"new": 11, "python_total": 117, "result": "OK"},
+  "mutation_checks": {
+    "total": 17, "detected": 17,
+    "first_pass_survivors_fixed": ["manifest hash check (test now edits the manifest itself)",
+                                   "trained checkpoint tamper check (test now asserts the specific error)"]
+  },
+  "end_to_end_reproduction": {
+    "suite": "dataset/stl_demo_samples_suite_v1 frozen from docs/stl_shape_v1_demo/samples (12 images, 18 instances)",
+    "suite_manifest_sha256": "4c5b845028ecb034b66421bdf716786340ba908066442e0cec37345182af3739",
+    "first_version_vs_archive": {"archive": "docs/stl_shape_v1_demo/predictions.json", "cases": 12, "predictions": 23,
+                                 "class_sequences_equal": 12, "max_confidence_difference": 1.0e-6,
+                                 "note": "archive rounds confidences to 6 decimals"},
+    "joint_v5_runtime_check": {"served_predict_equals_runner": "12/12 at 2 threads and 12/12 at 7 threads"},
+    "report": "runs/experiments/stl_demo_reproduction_v1/report.md",
+    "experiment_sha256": "5d3dfa8385524a2b241e0cb6e72381efbb7bc18a3c67b5b0fc55be5827e38784",
+    "observed": {"first_version_strict": 0.7778, "joint_v5_strict": 0.6111,
+                 "joint_v5_wrong_class": 7, "delta_ci_95": [-0.4212, 0.0667],
+                 "interpretation": "12 old-style samples chosen for the first-version demo; tool check only, no model conclusion"}
+  },
+  "not_covered": [
+    "Real training subprocess not executed here (no dataset/ on this machine; training needs an explicit decision)",
+    "Full-scale historical rounds (e.g. D-28, D-32) need dataset/ and runs/segment from the original machine",
+    "Gate thresholds remain a draft until R-13 is decided"
+  ]
+}

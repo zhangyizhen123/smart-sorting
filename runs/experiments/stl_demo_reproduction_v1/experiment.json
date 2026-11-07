@@ -1,0 +1,67 @@
+{
+  "name": "stl_demo_reproduction_v1",
+  "config": {
+    "name": "stl_demo_reproduction_v1",
+    "purpose": "D-36 端到端核对：用统一入口重算仓库自带的 12 张首版演示样例（合成测试图），首版预测须与 docs/stl_shape_v1_demo/predictions.json 归档一致；同时评估默认 V5 组合。仅为工具核对，不是新的验收结论。",
+    "output": "runs/experiments/stl_demo_reproduction_v1",
+    "seed": 42,
+    "threads": 2,
+    "thresholds": [
+      0.5,
+      0.75
+    ],
+    "suites": {
+      "demo_samples": {
+        "dataset": "dataset/stl_demo_samples_suite_v1",
+        "role": "diagnostic",
+        "group_fields": [
+          "group_id"
+        ]
+      }
+    },
+    "candidates": {
+      "first_version": {
+        "model": "models/trained/stl_shape_v1/best.pt",
+        "settings": {
+          "imgsz": 320,
+          "conf": 0.25,
+          "iou": 0.7,
+          "device": "cpu",
+          "agnostic_nms": false,
+          "retina_masks": true
+        }
+      },
+      "joint_v5": {
+        "pipeline": "models/trained/stl_shape_joint_v4/pipeline.json"
+      }
+    },
+    "comparisons": [
+      {
+        "candidate": "joint_v5",
+        "baseline": "first_version",
+        "suite": "demo_samples",
+        "unit": "image",
+        "resamples": 2000
+      }
+    ]
+  },
+  "config_sha256": "f092e1f437ebb4ee63040b59ad2c44febc35a94dccc9777924e83e0902ac572a",
+  "code_sha256": {
+    "run_experiment.py": "62d3ed7c27ad3de28bc8c5c6377215460b630d89ff1d0b7887d3138040e4d380",
+    "evaluate_focused.py": "37bbb88d09d1dcdaf89059427ca71a10e0f92476f9ad6eeb3d000e75278dc94b",
+    "contour_quality.py": "3fe6988deb0f9fcbe079b4e64846441941315d7afe909d6e233fa77de1789834",
+    "run_contour_audit.py": "d7aa94ee2fd4da6c914e617ba2b52ee735870f4a68de6fabc20c1ef90f213407",
+    "shape_refiner.py": "b5541a54c25e4da81183c97e7038db60f22efefef95c8fe1f3cb00bfea944f06"
+  },
+  "suites": {
+    "demo_samples": {
+      "dataset": "dataset/stl_demo_samples_suite_v1",
+      "manifest_sha256": "4c5b845028ecb034b66421bdf716786340ba908066442e0cec37345182af3739",
+      "rows": 12,
+      "role": "diagnostic"
+    }
+  },
+  "train_manifest_sha256": null,
+  "leakage_check": null,
+  "created_at": "2026-11-07T17:00:45.830706+00:00"
+}
