@@ -1,0 +1,45 @@
+{
+  "name": "pilot_s01_baseline_v2",
+  "purpose": "最终固定相机试拍会话 pilot_s01（当前大托盘 tray_v1，40 张，人工审核 93 个物块）上评估现有两个模型，记录用于训练之前的基线。只作诊断：托盘以后会更换，这批照片之后会用于训练，不是封存测试。 v2：在修正 14、26 号两处轮廓后的 pilot_s01_v2 上重跑，作为两条线共同对照的基线。",
+  "output": "runs/experiments/pilot_s01_baseline_v2",
+  "seed": 42,
+  "threads": 7,
+  "thresholds": [
+    0.5,
+    0.75
+  ],
+  "suites": {
+    "pilot_s01": {
+      "dataset": "dataset/suites/pilot_s01_v2",
+      "role": "diagnostic",
+      "group_fields": [
+        "session_group"
+      ]
+    }
+  },
+  "candidates": {
+    "joint_v5": {
+      "pipeline": "models/trained/stl_shape_joint_v4/pipeline.json"
+    },
+    "first_version": {
+      "model": "models/trained/stl_shape_v1/best.pt",
+      "settings": {
+        "imgsz": 320,
+        "conf": 0.25,
+        "iou": 0.7,
+        "device": "cpu",
+        "agnostic_nms": false,
+        "retina_masks": true
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "candidate": "joint_v5",
+      "baseline": "first_version",
+      "suite": "pilot_s01",
+      "unit": "image",
+      "resamples": 2000
+    }
+  ]
+}

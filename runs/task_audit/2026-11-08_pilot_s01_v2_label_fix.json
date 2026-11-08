@@ -1,0 +1,52 @@
+{
+  "tasks": ["D-39", "D-05", "D-08", "D-35"],
+  "session": "pilot_s01",
+  "date": "2026-11-08",
+  "trigger": "frames 25/26 class question plus an assistant overlap scan of all reviewed masks (pairwise intersection of exported block masks per image)",
+  "user_confirmation": "frames 25 (hex_prism) and 26 (pent_prism): the large green prisms on the left are two different physical blocks; both labels stand",
+  "problems_found": [
+    {"image": "pilot_s01_0026", "instance": "pilot_s01_0026_05", "class": "pent_prism",
+     "problem": "SAM outline also covered the cuboid behind it (0026_06): overlap 6437 of 6446 px"},
+    {"image": "pilot_s01_0014", "instance": "pilot_s01_0014_01", "class": "cube",
+     "problem": "SAM outline also covered the visible tip of the cone behind it (0014_03): overlap 1703 of 1720 px"}
+  ],
+  "human_fix_in_review_page": {
+    "pilot_s01_0026": "0026_05 set to not_block; new manual instance 0026_m01 pent_prism (12029 px, no overlap with 0026_06); 0026_m02 is a duplicate outline marked not_block (not exported)",
+    "pilot_s01_0014": "0014_01 set to not_block; new manual instance 0014_m02 cube (16850 px, no overlap with 0014_03)",
+    "assistant_visual_check": "overlays of the new masks checked: each covers only its own block"
+  },
+  "overlap_scan_after_fix": "only 3 boundary contacts remain (frames 11, 16, 17: 104, 5 and 8 px, <=1% of the smaller mask); no mask contains another block",
+  "review_status_after_fix": {"images": 40, "approved": 40, "blocks": 93, "not_block": 38, "manual_instances": 18, "manual_blocks": 17},
+  "export": {
+    "suite": "dataset/suites/pilot_s01_v2 (not in Git; v1 kept unchanged)",
+    "manifest_sha256": "13a81002676423fa4ff909af1529828bfcdaeeef0e99e2ede5e246b8bfd131d6",
+    "images": 40, "instances": 93, "empty_images": 4,
+    "blocks_per_class": {"cylinder": 8, "cube": 17, "cuboid": 7, "tri_prism": 13, "pent_prism": 9, "hex_prism": 8,
+                         "cone": 9, "tetrahedron": 15, "sphere": 7},
+    "diff_vs_v1": "images identical; only labels pilot_s01__pilot_s01_0014.txt (sha256 5dd144b2...c400) and pilot_s01__pilot_s01_0026.txt (sha256 d39ce156...3f06) differ"
+  },
+  "baseline_rerun": {
+    "config": "vision/configs/experiments/pilot_s01_baseline_v2.json",
+    "report": "runs/experiments/pilot_s01_baseline_v2/report.md",
+    "joint_v5_strict": 0.1610, "first_version_strict": 0.0952,
+    "note": "identical to the v1 baseline; the two faulty masks did not change matching. pilot_s01_v2 replaces v1 as the reference real set for both lines"
+  },
+  "known_gap": "smoke training (pilot_s01_smoke_train_v1) used v1, which had these two faulty masks; it only proved the chain works, so it is not rerun",
+  "overlap_check_added": {
+    "user_request": "加上检查 (2026-11-08)",
+    "files": ["vision/scripts/session_labeling.py", "vision/templates/session_review.html", "vision/tests/test_session_labeling.py"],
+    "rule": "two confirmed blocks in one approved image may share at most MAX_MASK_OVERLAP = 0.05 of the smaller outline (pilot_s01 real contacts <= 1.2%, faults >= 99%)",
+    "where": {
+      "review_page": "after saving, overlapping pairs are shown by the page's block numbers and the page stays on the image; also shown when opening such an image",
+      "status": "status --session S lists overlap_problems",
+      "export": "export refuses the whole batch before writing any file and names every pair; --max-overlap (range [0, 0.5)) is recorded as max_mask_overlap in freeze.json"
+    },
+    "verification": {
+      "unit_tests": "vision/tests/test_session_labeling.py 11 tests OK (2 new); vision/tests discover 131 tests OK",
+      "mutation_tests": "11/11 mutations of the new code detected (after adding coverage for unusable images, threshold pass-through and range check)",
+      "pilot_s01_current": "status overlap_problems = []; re-export reproduces the v2 manifest sha256 13a81002...31d6",
+      "pilot_s01_prefix_state": "in a scratch copy with the two faulty v1 outlines restored, status lists 4 pairs (0.99-1.00) and export is refused with no output directory",
+      "review_page": "served the scratch copy on 127.0.0.1:8771: opening frame 26 shows 'block 5 and block 6 overlap 100%; block 5 and block 7 overlap 100%'; saving keeps the page on frame 26 with the saved-but-overlapping warning"
+    }
+  }
+}

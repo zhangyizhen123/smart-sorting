@@ -43,6 +43,10 @@ NAMES = ["cylinder", "cube", "cuboid", "tri_prism", "pent_prism", "hex_prism", "
 CHINESE = ["圆柱体", "正方体", "长方体", "三棱柱", "五棱柱", "六棱柱", "圆锥体", "四面体", "球体"]
 NOT_BLOCK = "not_block"
 MASK_KINDS = ("sam", "model")
+# Each pixel shows at most one block, so neighbouring outlines only touch at the edge (pilot_s01: at most 1.2% of
+# the smaller outline). More than this means an outline swallowed the block behind it, or one block was confirmed
+# twice (pilot_s01 frames 14 and 26 before the v2 fix: 99-100%).
+MAX_MASK_OVERLAP = 0.05
 
 
 # ----------------------------------------------------------------------------- small helpers
@@ -114,6 +118,20 @@ def sam_box_fit(mask: np.ndarray, box: list[float], pad_fraction: float = 0.1) -
 def mask_iou(a: np.ndarray, b: np.ndarray) -> float:
     union = np.count_nonzero(a | b)
     return float(np.count_nonzero(a & b) / union) if union else 0.0
+
+
+def overlap_problems(masks: list[tuple[str, np.ndarray]], max_overlap: float = MAX_MASK_OVERLAP) -> list[dict]:
+    """Pairs of block outlines in one image sharing more than max_overlap of the smaller outline."""
+    areas = [int(np.count_nonzero(mask)) for _id, mask in masks]
+    problems = []
+    for a in range(len(masks)):
+        for b in range(a + 1, len(masks)):
+            shared = int(np.count_nonzero(masks[a][1] & masks[b][1]))
+            smaller = min(areas[a], areas[b])
+            fraction = shared / smaller if smaller else 0.0
+            if fraction > max_overlap:
+                problems.append({"ids": [masks[a][0], masks[b][0]], "pixels": shared, "fraction": round(fraction, 4)})
+    return problems
 
 
 def save_mask(mask: np.ndarray, path: Path) -> dict:
@@ -405,9 +423,23 @@ def save_review(session: Session, file: str, status: str, decisions: list[dict],
     return review
 
 
-def status(session: Session) -> dict:
+def review_overlaps(session: Session, file: str, review: dict | None = None,
+                    max_overlap: float = MAX_MASK_OVERLAP) -> list[dict]:
+    """Overlapping confirmed blocks in one approved review (see MAX_MASK_OVERLAP)."""
+    review = session.review(file) if review is None else review
+    if not review or review["status"] != "approved":
+        return []
+    masks = [(entry["id"], load_mask(session.masks / entry["mask_file"]))
+             for entry in review["instances"] if entry["class_name"] != NOT_BLOCK]
+    return overlap_problems(masks, max_overlap)
+
+
+def status(session: Session, overlaps: bool = False) -> dict:
     counts = {"images": len(session.images), "approved": 0, "unusable": 0, "pending": 0,
               "blocks": 0, "not_block": 0, "class_changed_from_draft": 0}
+    if overlaps:
+        counts["overlap_problems"] = [{"image": file, **problem} for file in session.images
+                                      for problem in review_overlaps(session, file)]
     for file in session.images:
         review = session.review(file)
         if review is None:
@@ -426,7 +458,9 @@ def status(session: Session) -> dict:
 def page_payload(session: Session) -> dict:
     images = []
     for file in session.images:
-        images.append({"file": file, "instances": session.instance_list(file), "review": session.review(file)})
+        review = session.review(file)
+        images.append({"file": file, "instances": session.instance_list(file), "review": review,
+                       "overlaps": review_overlaps(session, file, review)})
     return {"session": session.name, "group": session.group, "names": NAMES, "chinese": CHINESE,
             "not_block": NOT_BLOCK, "images": images}
 
@@ -514,7 +548,8 @@ def make_review_server(session: Session, segmenter_factory, port: int = 8770):
                     elif path == "/api/review":
                         review = save_review(session, body["image"], body["status"], body.get("instances", []),
                                              body.get("notes", ""))
-                        self.reply(200, {"review": review, "status": status(session)})
+                        self.reply(200, {"review": review, "status": status(session),
+                                         "overlaps": review_overlaps(session, body["image"], review)})
                     else:
                         self.reply(404, {"error": "没有这个接口。"})
             except (KeyError, ValueError, TypeError, FileNotFoundError, json.JSONDecodeError) as exc:
@@ -527,10 +562,13 @@ def make_review_server(session: Session, segmenter_factory, port: int = 8770):
 
 
 def export_sessions(sessions: list[Session], out: Path, split: str, *, allow_pending: bool = False,
-                    final_test_eligible: bool = False) -> dict:
-    """Write reviewed blocks as YOLO segmentation labels, in the frozen-suite layout run_experiment.py reads."""
+                    final_test_eligible: bool = False, max_overlap: float = MAX_MASK_OVERLAP) -> dict:
+    """Write reviewed blocks as YOLO segmentation labels, in the frozen-suite layout run_experiment.py reads.
+    Everything is checked before the first file is written, so a refused export leaves no partial suite."""
     if split not in {"train", "val", "test"}:
         raise ValueError("Split must be train, val or test")
+    if not 0 <= max_overlap < 0.5:
+        raise ValueError("max_overlap must be in [0, 0.5)")
     if out.exists() and any(out.iterdir()):
         raise FileExistsError("Refusing to overwrite a nonempty export; use a new name")
     rows, skipped, pending = [], [], []
@@ -551,6 +589,17 @@ def export_sessions(sessions: list[Session], out: Path, split: str, *, allow_pen
         raise ValueError(f"{len(pending)} image(s) are not reviewed yet, e.g. {pending[:3]}")
     if not plans:
         raise ValueError("Nothing approved to export")
+    overlapping = []
+    for session, file, review in plans:
+        for entry in review["instances"]:
+            if entry["class_name"] != NOT_BLOCK and sha256_file(session.masks / entry["mask_file"]) != entry["mask_sha256"]:
+                raise ValueError(f"Reviewed mask changed: {entry['mask_file']}")
+        overlapping += [f"{session.name}/{file}: {' + '.join(p['ids'])} share {p['fraction']:.0%}"
+                        for p in review_overlaps(session, file, review, max_overlap)]
+    if overlapping:
+        raise ValueError(f"{len(overlapping)} pair(s) of confirmed blocks overlap by more than {max_overlap:.0%} "
+                         "(an outline swallowed another block, or one block was confirmed twice); fix them in the "
+                         "review page: " + "; ".join(overlapping))
     (out / "images" / split).mkdir(parents=True)
     (out / "labels" / split).mkdir(parents=True)
     for session, file, review in plans:
@@ -585,7 +634,8 @@ def export_sessions(sessions: list[Session], out: Path, split: str, *, allow_pen
             "session_groups": sorted({s.group for s in sessions}), "manifest_sha256": sha256_file(manifest),
             "images": len(rows), "instances": sum(len(r["classes"]) for r in rows),
             "empty_images": sum(not r["classes"] for r in rows), "skipped_unusable": skipped,
-            "pending_not_exported": pending, "final_test_eligible": final_test_eligible, "created_at": now()}
+            "pending_not_exported": pending, "final_test_eligible": final_test_eligible,
+            "max_mask_overlap": max_overlap, "created_at": now()}
     write_json(out / "freeze.json", lock)
     data_yaml = (f"path: {out.resolve().as_posix()}\ntrain: images/{split}\nval: images/{split}\nnc: {len(NAMES)}\n"
                  "names: [" + ", ".join(NAMES) + "]\n")
@@ -614,17 +664,20 @@ def main() -> None:
     export.add_argument("--out", type=Path, required=True)
     export.add_argument("--allow-pending", action="store_true")
     export.add_argument("--final-test-eligible", action="store_true")
+    export.add_argument("--max-overlap", type=float, default=MAX_MASK_OVERLAP,
+                        help="largest share of the smaller outline two confirmed blocks may share (default 0.05)")
     args = parser.parse_args()
     if args.command == "draft":
         print(json.dumps(draft_session(Session(args.session), v5_predictor(args.confidence), sam_segmenter()), ensure_ascii=False))
     elif args.command == "review":
         serve_review(Session(args.session), sam_segmenter, args.port, not args.no_open)
     elif args.command == "status":
-        print(json.dumps(status(Session(args.session)), ensure_ascii=False))
+        print(json.dumps(status(Session(args.session), overlaps=True), ensure_ascii=False))
     else:
         out = args.out if args.out.is_absolute() else ROOT / args.out
         result = export_sessions([Session(s) for s in args.sessions], out, args.split,
-                                 allow_pending=args.allow_pending, final_test_eligible=args.final_test_eligible)
+                                 allow_pending=args.allow_pending, final_test_eligible=args.final_test_eligible,
+                                 max_overlap=args.max_overlap)
         print(json.dumps({k: v for k, v in result.items() if k not in {"skipped_unusable", "pending_not_exported"}},
                          ensure_ascii=False))
 

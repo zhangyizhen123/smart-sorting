@@ -245,6 +245,61 @@ class SessionLabelingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             sl.export_sessions([self.session], self.root / 'e2', 'val', allow_pending=True)
 
+    def test_overlap_problems_flags_containment_not_edge_contact(self):
+        left = np.zeros((40, 40), bool)
+        left[0:20, 0:20] = True
+        touching = np.zeros((40, 40), bool)
+        touching[0:20, 19:39] = True          # shares one column: 20/400 = 5%, at the limit
+        swallowed = np.zeros((40, 40), bool)
+        swallowed[5:10, 5:10] = True          # inside `left`
+        self.assertEqual(sl.overlap_problems([('a', left), ('b', touching)]), [])
+        problems = sl.overlap_problems([('a', left), ('b', touching), ('c', swallowed)])
+        self.assertEqual([p['ids'] for p in problems], [['a', 'c']])
+        self.assertEqual((problems[0]['pixels'], problems[0]['fraction']), (25, 1.0))
+        self.assertEqual(len(sl.overlap_problems([('a', left), ('b', touching)], max_overlap=0.04)), 1)
+        self.assertEqual(sl.overlap_problems([('a', left), ('e', np.zeros((40, 40), bool))]), [])
+
+    def test_export_refuses_overlapping_blocks_and_writes_nothing(self):
+        self.review_all()
+        sl.save_review(self.session, 'cap_0003.jpg', 'approved', [])
+        draft_id = self.session.draft('cap_0001.jpg')['instances'][0]['id']
+        # The cube confirmed a second time through a manual box: the same block counted twice.
+        twice = sl.add_manual_instance(self.session, 'cap_0001.jpg', [36, 36, 84, 84], good_segmenter)
+        sphere_id = self.session.draft('cap_0001.jpg')['instances'][1]['id']
+        sl.save_review(self.session, 'cap_0001.jpg', 'approved',
+                       [{'id': draft_id, 'class_name': 'cube'}, {'id': sphere_id, 'class_name': 'not_block'},
+                        {'id': twice['id'], 'class_name': 'cube'}])
+        problems = sl.status(self.session, overlaps=True)['overlap_problems']
+        self.assertEqual([(p['image'], p['ids']) for p in problems], [('cap_0001.jpg', [draft_id, twice['id']])])
+        self.assertNotIn('overlap_problems', sl.status(self.session))
+        page = {i['file']: i['overlaps'] for i in sl.page_payload(self.session)['images']}
+        self.assertEqual(len(page['cap_0001.jpg']), 1)
+        self.assertEqual(page['cap_0003.jpg'], [])
+        out = self.root / 'dataset' / 'export'
+        with self.assertRaisesRegex(ValueError, 'overlap'):
+            sl.export_sessions([self.session], out, 'train')
+        self.assertFalse(out.exists())
+        # An image set aside as unusable is not exported, so its outlines are not checked.
+        sl.save_review(self.session, 'cap_0001.jpg', 'unusable',
+                       [{'id': draft_id, 'class_name': 'cube'}, {'id': twice['id'], 'class_name': 'cube'}])
+        self.assertEqual(sl.review_overlaps(self.session, 'cap_0001.jpg'), [])
+        # A neighbour that only touches the cube's edge (cube outline spans x 39-81: 20 px of 780, 2.6%)
+        # passes the default limit.
+        edge = np.zeros((160, 200), bool)
+        edge[60:80, 81:120] = True
+        touch = sl.add_manual_instance(self.session, 'cap_0001.jpg', [81, 60, 120, 80], lambda rgb, boxes: [edge])
+        sl.save_review(self.session, 'cap_0001.jpg', 'approved',
+                       [{'id': draft_id, 'class_name': 'cube'}, {'id': sphere_id, 'class_name': 'not_block'},
+                        {'id': twice['id'], 'class_name': 'not_block'}, {'id': touch['id'], 'class_name': 'cuboid'}])
+        self.assertEqual(sl.review_overlaps(self.session, 'cap_0001.jpg'), [])
+        with self.assertRaisesRegex(ValueError, 'overlap'):
+            sl.export_sessions([self.session], out, 'train', max_overlap=0.01)
+        with self.assertRaisesRegex(ValueError, 'max_overlap must'):
+            sl.export_sessions([self.session], out, 'train', max_overlap=0.5)
+        self.assertFalse(out.exists())
+        lock = sl.export_sessions([self.session], out, 'train')
+        self.assertEqual((lock['instances'], lock['max_mask_overlap']), (2, 0.05))
+
     def test_review_server_saves_and_rejects_foreign_hosts(self):
         sl.draft_session(self.session, fake_predictor, good_segmenter)
         server = sl.make_review_server(self.session, lambda: good_segmenter, port=0)
@@ -260,6 +315,7 @@ class SessionLabelingTests(unittest.TestCase):
             request = urllib.request.Request(base + '/api/review', data=body, headers={'Content-Type': 'application/json'})
             result = json.loads(urllib.request.urlopen(request).read())
             self.assertEqual(result['status']['approved'], 1)
+            self.assertEqual(result['overlaps'], [])
             inst_id = self.session.draft('cap_0002.jpg')['instances'][0]['id']
             trace = json.dumps({'image': 'cap_0002.jpg', 'id': inst_id, 'points': [[80, 60], [120, 60], [100, 100]]}).encode()
             traced = json.loads(urllib.request.urlopen(urllib.request.Request(

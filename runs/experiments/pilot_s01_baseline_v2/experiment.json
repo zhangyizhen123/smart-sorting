@@ -1,0 +1,67 @@
+{
+  "name": "pilot_s01_baseline_v2",
+  "config": {
+    "name": "pilot_s01_baseline_v2",
+    "purpose": "最终固定相机试拍会话 pilot_s01（当前大托盘 tray_v1，40 张，人工审核 93 个物块）上评估现有两个模型，记录用于训练之前的基线。只作诊断：托盘以后会更换，这批照片之后会用于训练，不是封存测试。 v2：在修正 14、26 号两处轮廓后的 pilot_s01_v2 上重跑，作为两条线共同对照的基线。",
+    "output": "runs/experiments/pilot_s01_baseline_v2",
+    "seed": 42,
+    "threads": 7,
+    "thresholds": [
+      0.5,
+      0.75
+    ],
+    "suites": {
+      "pilot_s01": {
+        "dataset": "dataset/suites/pilot_s01_v2",
+        "role": "diagnostic",
+        "group_fields": [
+          "session_group"
+        ]
+      }
+    },
+    "candidates": {
+      "joint_v5": {
+        "pipeline": "models/trained/stl_shape_joint_v4/pipeline.json"
+      },
+      "first_version": {
+        "model": "models/trained/stl_shape_v1/best.pt",
+        "settings": {
+          "imgsz": 320,
+          "conf": 0.25,
+          "iou": 0.7,
+          "device": "cpu",
+          "agnostic_nms": false,
+          "retina_masks": true
+        }
+      }
+    },
+    "comparisons": [
+      {
+        "candidate": "joint_v5",
+        "baseline": "first_version",
+        "suite": "pilot_s01",
+        "unit": "image",
+        "resamples": 2000
+      }
+    ]
+  },
+  "config_sha256": "0438211badce754b823628d6936e1be4d676a4f6e7a577d121bb4d545558807c",
+  "code_sha256": {
+    "run_experiment.py": "291e1c85eb543e4ef2a7c1fa144ff7bded805173c1577b3519b03b904c525ccc",
+    "evaluate_focused.py": "37bbb88d09d1dcdaf89059427ca71a10e0f92476f9ad6eeb3d000e75278dc94b",
+    "contour_quality.py": "3fe6988deb0f9fcbe079b4e64846441941315d7afe909d6e233fa77de1789834",
+    "run_contour_audit.py": "d7aa94ee2fd4da6c914e617ba2b52ee735870f4a68de6fabc20c1ef90f213407",
+    "shape_refiner.py": "b5541a54c25e4da81183c97e7038db60f22efefef95c8fe1f3cb00bfea944f06"
+  },
+  "suites": {
+    "pilot_s01": {
+      "dataset": "dataset/suites/pilot_s01_v2",
+      "manifest_sha256": "13a81002676423fa4ff909af1529828bfcdaeeef0e99e2ede5e246b8bfd131d6",
+      "rows": 40,
+      "role": "diagnostic"
+    }
+  },
+  "train_manifest_sha256": null,
+  "leakage_check": null,
+  "created_at": "2026-11-08T11:56:48.883914+00:00"
+}

@@ -222,9 +222,16 @@ function go(i) {
   index = i; mode = null; target = null; polyPoints = []; canvas.classList.remove("drawing");
   document.getElementById("add").classList.remove("on"); document.getElementById("polybar").hidden = true;
   initDecisions(); renderList(); renderInstances(); setMsg("");
+  if ((current().overlaps || []).length) showOverlaps(current(), "");
   document.getElementById("imgname").textContent = current().file;
   img = new Image(); img.onload = () => { canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; draw(); };
   img.src = "/image/" + encodeURIComponent(current().file);
+}
+
+function showOverlaps(item, prefix) {
+  const num = id => "物块 " + (item.instances.findIndex(i => i.id === id) + 1);
+  const pairs = item.overlaps.map(p => `${num(p.ids[0])} 与 ${num(p.ids[1])} 重叠 ${Math.round(p.fraction * 100)}%`);
+  setMsg(`${prefix}轮廓重叠：${pairs.join("；")}。导出会被拒绝：同一块确认了两次就把多余的标为“不是物块”；圈进了别的物块就对它“重画轮廓”或“手动描边”，再保存。`, "err");
 }
 
 async function post(url, body) {
@@ -240,7 +247,9 @@ async function save(status) {
     const instances = item.instances.filter(i => decisions[i.id].class_name)
       .map(i => ({ id:i.id, class_name:decisions[i.id].class_name, mask:decisions[i.id].mask }));
     const res = await post("/api/review", { image:item.file, status, instances, notes:document.getElementById("notes").value });
-    item.review = res.review; setMsg("已保存。", "ok"); renderList();
+    item.review = res.review; item.overlaps = res.overlaps || []; renderList();
+    if (item.overlaps.length) { renderInstances(); draw(); showOverlaps(item, "已保存，但"); return; }
+    setMsg("已保存。", "ok");
     const nextPending = DATA.images.findIndex((it, i) => i > index && !it.review);
     go(nextPending >= 0 ? nextPending : Math.min(index + 1, DATA.images.length - 1));
   } catch (e) { setMsg("保存失败：" + e.message, "err"); }
