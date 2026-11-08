@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>会话标注审核</title>
+<style>
+:root { --bg:#f2f4f6; --panel:#ffffff; --fg:#17212b; --muted:#5c6874; --line:#d3dae1; --accent:#14607a;
+        --ok:#1f7a4a; --bad:#a3362c; --warn:#9a6300; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 system-ui,"Microsoft YaHei",sans-serif; }
+header { display:flex; flex-wrap:wrap; gap:8px 24px; align-items:baseline; padding:12px 18px; background:var(--panel); border-bottom:1px solid var(--line); }
+header h1 { font-size:18px; margin:0; }
+#progress { color:var(--muted); font-variant-numeric:tabular-nums; }
+.layout { display:grid; grid-template-columns:190px minmax(0,1fr) 340px; gap:14px; padding:14px; }
+#list { background:var(--panel); border:1px solid var(--line); border-radius:8px; max-height:calc(100vh - 90px); overflow:auto; }
+#list button { display:flex; width:100%; gap:8px; align-items:center; border:0; border-bottom:1px solid var(--line); background:none; padding:7px 10px; font:inherit; cursor:pointer; text-align:left; }
+#list button.current { background:#e3eff4; font-weight:600; }
+.dot { width:10px; height:10px; border-radius:50%; flex:none; background:#c2c9d0; }
+.dot.approved { background:var(--ok); } .dot.unusable { background:var(--bad); }
+#stage { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px; min-width:0; }
+canvas { width:100%; height:auto; display:block; cursor:default; border-radius:4px; }
+canvas.drawing { cursor:crosshair; }
+.hint { color:var(--muted); font-size:13px; margin-top:6px; }
+#side { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; display:grid; gap:10px; align-content:start; max-height:calc(100vh - 90px); overflow:auto; }
+.inst { border:1px solid var(--line); border-radius:6px; padding:8px; display:grid; gap:6px; }
+.inst.unset { border-color:var(--warn); background:#fff8ea; }
+.inst-head { display:flex; gap:8px; align-items:center; font-weight:600; }
+.swatch { width:14px; height:14px; border-radius:3px; flex:none; }
+.meta { color:var(--muted); font-size:12.5px; }
+select, textarea, button { font:inherit; }
+select { width:100%; padding:4px; }
+.masks label { margin-right:12px; font-size:13.5px; }
+textarea { width:100%; min-height:54px; }
+.row { display:flex; gap:8px; flex-wrap:wrap; }
+.btn { padding:8px 12px; border:1px solid #7b8a99; border-radius:6px; background:#fff; cursor:pointer; }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn.danger { color:var(--bad); border-color:var(--bad); }
+.btn.on { background:#fff3d6; border-color:var(--warn); }
+#msg { min-height:1.4em; font-size:13.5px; }
+#msg.err { color:var(--bad); } #msg.ok { color:var(--ok); }
+.saved { font-size:13px; color:var(--muted); }
+@media (max-width:1100px) { .layout { grid-template-columns:1fr; } #list { max-height:180px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">会话标注审核</h1>
+  <span id="progress"></span>
+  <span class="hint">每张图：逐个确认物块形状（误检选"不是物块"）；轮廓不对就点该物块的"重画轮廓"或"手动描边"；漏标的物块点"添加漏标物块"后在图上拖框；最后保存。</span>
+</header>
+<div class="layout">
+  <nav id="list" aria-label="照片列表"></nav>
+  <section id="stage">
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div class="hint" id="imgname"></div>
+  </section>
+  <aside id="side">
+    <div class="row">
+      <button class="btn" id="prev">上一张</button>
+      <button class="btn" id="next">下一张</button>
+      <button class="btn" id="add">添加漏标物块</button>
+    </div>
+    <div id="polybar" class="row" hidden>
+      <button class="btn primary" id="polydone">完成描边</button>
+      <button class="btn" id="polyundo">撤销一点</button>
+      <button class="btn" id="polycancel">取消</button>
+    </div>
+    <div id="instances"></div>
+    <label>备注（可选）<textarea id="notes" placeholder="例如：画面边缘有手、物块被挡住"></textarea></label>
+    <div class="row">
+      <button class="btn primary" id="approve">保存：本张正确，下一张</button>
+      <button class="btn danger" id="unusable">本张不可用</button>
+    </div>
+    <div id="msg" role="status"></div>
+    <div class="saved" id="saved"></div>
+  </aside>
+</div>
+<script>
+const DATA = __PAYLOAD__;
+const COLORS = ["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#42d4f4","#f032e6","#9a6324","#808000"];
+const MASK_LABELS = { sam:"贴边（SAM）", model:"模型原始", redo:"重画", polygon:"手动描边" };
+const canvas = document.getElementById("canvas"), ctx = canvas.getContext("2d");
+let index = 0, img = new Image(), decisions = {}, dragStart = null, dragNow = null;
+let mode = null, target = null, polyPoints = [];   // mode: "add" | "redo" | "poly"
+
+function setMode(next, id) {
+  mode = next; target = id || null; polyPoints = []; dragStart = dragNow = null;
+  canvas.classList.toggle("drawing", !!mode);
+  document.getElementById("add").classList.toggle("on", mode === "add");
+  document.getElementById("polybar").hidden = mode !== "poly";
+  const k = target ? current().instances.findIndex(i => i.id === target) + 1 : 0;
+  setMsg(mode === "add" ? "在照片上按住鼠标拖一个框，把漏标的物块框住。"
+       : mode === "redo" ? `为物块 ${k} 拖一个紧贴它的框，SAM 会重新画轮廓。`
+       : mode === "poly" ? `沿物块 ${k} 的外边缘依次点击各个角，点完按“完成描边”（或双击）。` : "");
+  renderInstances(); draw();
+}
+
+function label(name) {
+  if (name === DATA.not_block) return "不是物块（删除）";
+  const i = DATA.names.indexOf(name);
+  return i < 0 ? "请选择形状" : DATA.chinese[i] + " " + name;
+}
+function current() { return DATA.images[index]; }
+function setMsg(text, kind) { const m = document.getElementById("msg"); m.textContent = text; m.className = kind || ""; }
+
+function initDecisions() {
+  const item = current(); decisions = {};
+  const saved = item.review ? Object.fromEntries(item.review.instances.map(e => [e.id, e])) : {};
+  for (const inst of item.instances) {
+    const s = saved[inst.id];
+    decisions[inst.id] = {
+      class_name: s ? s.class_name : (inst.draft_class || ""),
+      mask: (s && s.mask) || inst.default_mask
+    };
+  }
+  document.getElementById("notes").value = item.review ? item.review.notes || "" : "";
+}
+
+function renderList() {
+  const list = document.getElementById("list"); list.textContent = "";
+  DATA.images.forEach((item, i) => {
+    const b = document.createElement("button");
+    b.className = i === index ? "current" : "";
+    const dot = document.createElement("span");
+    dot.className = "dot " + (item.review ? item.review.status : "");
+    b.append(dot, document.createTextNode(item.file.replace(/\.jpg$/i, "")));
+    b.onclick = () => go(i);
+    list.append(b);
+  });
+  const counts = { approved:0, unusable:0, pending:0 };
+  DATA.images.forEach(it => counts[it.review ? it.review.status : "pending"]++);
+  document.getElementById("progress").textContent =
+    `已确认 ${counts.approved} · 不可用 ${counts.unusable} · 待审核 ${counts.pending} / 共 ${DATA.images.length}`;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (img.complete) ctx.drawImage(img, 0, 0);
+  current().instances.forEach((inst, k) => {
+    const d = decisions[inst.id]; const mask = inst.masks[d.mask] || inst.masks[inst.default_mask];
+    const pts = mask.contour; if (!pts.length) return;
+    const isNot = d.class_name === DATA.not_block;
+    const color = isNot ? "#888888" : (d.class_name ? COLORS[DATA.names.indexOf(d.class_name)] : "#ffb000");
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (const p of pts.slice(1)) ctx.lineTo(p[0], p[1]);
+    ctx.closePath();
+    ctx.setLineDash(isNot ? [5, 4] : []); ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
+    ctx.globalAlpha = isNot ? 0.08 : 0.18; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1; ctx.setLineDash([]);
+    const [x, y] = mask.box; ctx.font = "bold 15px system-ui"; ctx.fillStyle = "#000"; ctx.fillRect(x, Math.max(0, y - 18), 26, 18);
+    ctx.fillStyle = "#fff"; ctx.fillText(String(k + 1), x + 5, Math.max(13, y - 4));
+  });
+  if ((mode === "add" || mode === "redo") && dragStart && dragNow) {
+    ctx.strokeStyle = "#ffb000"; ctx.lineWidth = 2; ctx.setLineDash([6, 3]);
+    ctx.strokeRect(dragStart[0], dragStart[1], dragNow[0] - dragStart[0], dragNow[1] - dragStart[1]); ctx.setLineDash([]);
+  }
+  if (mode === "poly" && polyPoints.length) {
+    ctx.strokeStyle = "#ffb000"; ctx.fillStyle = "#ffb000"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(polyPoints[0][0], polyPoints[0][1]);
+    for (const p of polyPoints.slice(1)) ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+    for (const p of polyPoints) { ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, 2 * Math.PI); ctx.fill(); }
+  }
+}
+
+function renderInstances() {
+  const box = document.getElementById("instances"); box.textContent = "";
+  const item = current();
+  if (!item.instances.length) {
+    const p = document.createElement("p"); p.className = "meta";
+    p.textContent = "这张图没有检测到物块。若确实是空托盘，直接保存；若有漏标，点“添加漏标物块”。";
+    box.append(p);
+  }
+  item.instances.forEach((inst, k) => {
+    const d = decisions[inst.id];
+    const card = document.createElement("div"); card.className = "inst" + (d.class_name ? "" : " unset");
+    const head = document.createElement("div"); head.className = "inst-head";
+    const sw = document.createElement("span"); sw.className = "swatch";
+    sw.style.background = d.class_name && d.class_name !== DATA.not_block ? COLORS[DATA.names.indexOf(d.class_name)] : "#bbb";
+    head.append(sw, document.createTextNode(`物块 ${k + 1}`));
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.textContent = inst.origin === "manual" ? "手动补标（MobileSAM 轮廓）"
+      : `模型初判：${label(inst.draft_class)}，置信度 ${inst.draft_confidence}，两种轮廓重合度 ${inst.sam_model_iou}`;
+    const sel = document.createElement("select"); sel.setAttribute("aria-label", `物块 ${k + 1} 的形状`);
+    const blank = new Option("请选择形状", ""); blank.disabled = true; sel.add(blank);
+    DATA.names.forEach(n => sel.add(new Option(label(n), n)));
+    sel.add(new Option(label(DATA.not_block), DATA.not_block));
+    sel.value = d.class_name;
+    sel.onchange = () => { d.class_name = sel.value; renderInstances(); draw(); };
+    card.append(head, meta, sel);
+    const kinds = Object.keys(inst.masks);
+    if (d.class_name !== DATA.not_block) {
+      if (kinds.length > 1) {
+        const masks = document.createElement("div"); masks.className = "masks";
+        masks.append(document.createTextNode("轮廓："));
+        for (const kind of kinds) {
+          const lab = document.createElement("label"); const r = document.createElement("input");
+          r.type = "radio"; r.name = "mask_" + inst.id; r.value = kind; r.checked = d.mask === kind;
+          r.onchange = () => { d.mask = kind; draw(); };
+          lab.append(r, document.createTextNode(" " + (MASK_LABELS[kind] || kind)));
+          masks.append(lab);
+        }
+        card.append(masks);
+      }
+      const tools = document.createElement("div"); tools.className = "row";
+      const redo = document.createElement("button"); redo.className = "btn"; redo.textContent = "重画轮廓";
+      redo.classList.toggle("on", mode === "redo" && target === inst.id);
+      redo.onclick = () => setMode(mode === "redo" && target === inst.id ? null : "redo", inst.id);
+      const trace = document.createElement("button"); trace.className = "btn"; trace.textContent = "手动描边";
+      trace.classList.toggle("on", mode === "poly" && target === inst.id);
+      trace.onclick = () => setMode(mode === "poly" && target === inst.id ? null : "poly", inst.id);
+      tools.append(redo, trace); card.append(tools);
+    }
+    box.append(card);
+  });
+  const rev = item.review;
+  document.getElementById("saved").textContent = rev ? `已保存：${rev.status === "approved" ? "本张正确" : "本张不可用"}（${rev.reviewed_at.slice(0, 19).replace("T", " ")} UTC）` : "尚未保存";
+}
+
+function go(i) {
+  if (i < 0 || i >= DATA.images.length) return;
+  index = i; mode = null; target = null; polyPoints = []; canvas.classList.remove("drawing");
+  document.getElementById("add").classList.remove("on"); document.getElementById("polybar").hidden = true;
+  initDecisions(); renderList(); renderInstances(); setMsg("");
+  document.getElementById("imgname").textContent = current().file;
+  img = new Image(); img.onload = () => { canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; draw(); };
+  img.src = "/image/" + encodeURIComponent(current().file);
+}
+
+async function post(url, body) {
+  const r = await fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) });
+  const data = await r.json(); if (!r.ok) throw new Error(data.error || r.statusText); return data;
+}
+
+async function save(status) {
+  const item = current();
+  const unset = item.instances.filter(i => !decisions[i.id].class_name);
+  if (status === "approved" && unset.length) { setMsg(`还有 ${unset.length} 个物块没选形状。`, "err"); return; }
+  try {
+    const instances = item.instances.filter(i => decisions[i.id].class_name)
+      .map(i => ({ id:i.id, class_name:decisions[i.id].class_name, mask:decisions[i.id].mask }));
+    const res = await post("/api/review", { image:item.file, status, instances, notes:document.getElementById("notes").value });
+    item.review = res.review; setMsg("已保存。", "ok"); renderList();
+    const nextPending = DATA.images.findIndex((it, i) => i > index && !it.review);
+    go(nextPending >= 0 ? nextPending : Math.min(index + 1, DATA.images.length - 1));
+  } catch (e) { setMsg("保存失败：" + e.message, "err"); }
+}
+
+function toImage(ev) {
+  const r = canvas.getBoundingClientRect();
+  return [(ev.clientX - r.left) * canvas.width / r.width, (ev.clientY - r.top) * canvas.height / r.height];
+}
+function replaceInstance(updated, kind) {
+  const list = current().instances; const i = list.findIndex(x => x.id === updated.id);
+  list[i] = updated; decisions[updated.id].mask = kind;
+}
+canvas.addEventListener("mousedown", ev => {
+  if (mode === "add" || mode === "redo") { dragStart = toImage(ev); dragNow = dragStart; }
+  else if (mode === "poly") { polyPoints.push(toImage(ev)); draw(); }
+});
+canvas.addEventListener("mousemove", ev => { if ((mode === "add" || mode === "redo") && dragStart) { dragNow = toImage(ev); draw(); } });
+canvas.addEventListener("dblclick", () => { if (mode === "poly") finishTrace(); });
+canvas.addEventListener("mouseup", async ev => {
+  if (!(mode === "add" || mode === "redo") || !dragStart) return;
+  const end = toImage(ev), was = mode, id = target;
+  const box = [Math.min(dragStart[0], end[0]), Math.min(dragStart[1], end[1]), Math.max(dragStart[0], end[0]), Math.max(dragStart[1], end[1])];
+  dragStart = dragNow = null;
+  if (box[2] - box[0] < 6 || box[3] - box[1] < 6) { draw(); setMsg("框太小了，请重新拖一个包住物块的框。", "err"); return; }
+  setMode(null); setMsg("正在生成轮廓…");
+  try {
+    if (was === "add") {
+      const inst = await post("/api/segment", { image:current().file, box });
+      current().instances.push(inst); decisions[inst.id] = { class_name:"", mask:inst.default_mask };
+      setMsg("已添加，请为它选择形状。", "ok");
+    } else {
+      replaceInstance(await post("/api/reoutline", { image:current().file, id, box }), "redo");
+      setMsg("已重画轮廓，看看是否贴合；不满意可以再重画或手动描边。", "ok");
+    }
+    renderInstances(); draw();
+  } catch (e) { draw(); setMsg((was === "add" ? "添加" : "重画") + "失败：" + e.message, "err"); }
+});
+async function finishTrace() {
+  // a double-click also lands two clicks at the same spot; drop near-duplicate points
+  const pts = polyPoints.filter((p, i) => i === 0 || Math.hypot(p[0] - polyPoints[i - 1][0], p[1] - polyPoints[i - 1][1]) > 2);
+  if (pts.length < 3) { setMsg("至少点三个角。", "err"); return; }
+  const id = target; setMode(null); setMsg("正在保存描边…");
+  try {
+    replaceInstance(await post("/api/trace", { image:current().file, id, points:pts }), "polygon");
+    renderInstances(); draw(); setMsg("已保存手动描边。", "ok");
+  } catch (e) { draw(); setMsg("描边失败：" + e.message, "err"); }
+}
+document.getElementById("polydone").onclick = finishTrace;
+document.getElementById("polyundo").onclick = () => { polyPoints.pop(); draw(); };
+document.getElementById("polycancel").onclick = () => setMode(null);
+document.getElementById("add").onclick = () => setMode(mode === "add" ? null : "add");
+document.getElementById("prev").onclick = () => go(index - 1);
+document.getElementById("next").onclick = () => go(index + 1);
+document.getElementById("approve").onclick = () => save("approved");
+document.getElementById("unusable").onclick = () => save("unusable");
+document.getElementById("title").textContent = `会话标注审核：${DATA.session}（${DATA.group}）`;
+const firstPending = DATA.images.findIndex(it => !it.review);
+go(firstPending >= 0 ? firstPending : 0);
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+{
+  "name": "pilot_s01_smoke_fit_v1",
+  "purpose": "训练拟合检查：冒烟训练得到的检查点在它自己的 40 张训练图上的结果，只用来确认模型确实从标注中学到了东西；不代表新照片上的效果，不能与 pilot_s01_baseline_v1 当作独立比较。",
+  "generated_at": "2026-11-08T11:04:51.165087+00:00",
+  "experiment_sha256": "cf4864fdfc0b4e26fc6cd3ad10f2cf821e974be20d89858cea9b7e59f77e074a",
+  "training": null,
+  "candidates": {
+    "smoke_best": {
+      "kind": "model",
+      "path": "runs/experiments/pilot_s01_smoke_train_v1/train/weights/best.pt",
+      "model_sha256": "2dfff0a0ba4fa34b8979f10fde27f114e0cfd50be8293f2291556a792b1e34bf",
+      "settings": {
+        "imgsz": 640,
+        "conf": 0.25,
+        "iou": 0.7,
+        "device": 0,
+        "retina_masks": true
+      }
+    }
+  },
+  "suites": {
+    "pilot_s01_training_images": {
+      "dataset": "dataset/suites/pilot_s01_v1",
+      "manifest_sha256": "4036608bc991dd5cdf161f9ebf980e7e411a6d5c8d4c33842a883c134616a3a2",
+      "rows": 40,
+      "role": "diagnostic"
+    }
+  },
+  "summaries": {
+    "smoke_best": {
+      "pilot_s01_training_images": {
+        "images": 40,
+        "instances": 93,
+        "strict_instance_score": 0.10952380952380952,
+        "missed_instances": 29,
+        "duplicate_detections": 7,
+        "spurious_detections": 117,
+        "false_positives_per_image": 2.925,
+        "whole_scene_accuracy": 0.0,
+        "empty_images": 4,
+        "empty_images_with_detections": 4,
+        "empty_image_alarm_rate": 1.0,
+        "boundary_iou_with_unmatched_zero": 0.31117106265520256,
+        "geometry": {
+          "matched_instances": 64,
+          "truth_instances": 93,
+          "unmatched_truth": 29,
+          "matched_mean_mask_iou": 0.813937514513028,
+          "matched_mean_boundary_iou": 0.45217045042084125,
+          "boundary_iou_with_unmatched_zero": 0.31117106265520256,
+          "matched_mean_center_error_pixels": 5.910863307322312,
+          "matched_p95_center_error_pixels": 16.2965548016945,
+          "matched_mean_center_error_normalized": 0.007388579134152889
+        },
+        "per_class": {
+          "cylinder": {
+            "instances": 8,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 3
+          },
+          "cube": {
+            "instances": 17,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 0.11764705882352941,
+            "missed": 15
+          },
+          "cuboid": {
+            "instances": 7,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 1
+          },
+          "tri_prism": {
+            "instances": 13,
+            "clean_correct": 8,
+            "clean_instance_accuracy": 0.6153846153846154,
+            "missed": 1
+          },
+          "pent_prism": {
+            "instances": 9,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 1
+          },
+          "hex_prism": {
+            "instances": 8,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 2
+          },
+          "cone": {
+            "instances": 9,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 1
+          },
+          "tetrahedron": {
+            "instances": 15,
+            "clean_correct": 13,
+            "clean_instance_accuracy": 0.8666666666666667,
+            "missed": 0
+          },
+          "sphere": {
+            "instances": 7,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 5
+          }
+        },
+        "confusion_rows_true_cols_pred": [
+          [
+            0,
+            0,
+            0,
+            0,
+            5,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            3,
+            0,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            4,
+            0,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            13,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "scores_by_threshold": {
+          "0.5": {
+            "strict_instance_score": 0.10952380952380952,
+            "missed_instances": 29,
+            "duplicate_detections": 7,
+            "spurious_detections": 117
+          }
+        },
+        "median_inference_seconds": 0.025580099998478545,
+        "groups": {}
+      }
+    }
+  },
+  "comparisons": [],
+  "selection": null,
+  "gates": [],
+  "gates_status": "none",
+  "all_gates_passed": null,
+  "sealed_suites": [],
+  "models_deployed": false
+}

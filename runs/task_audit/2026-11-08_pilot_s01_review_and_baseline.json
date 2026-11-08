@@ -1,0 +1,37 @@
+{
+  "tasks": ["D-39", "D-05", "D-08"],
+  "session": "pilot_s01",
+  "session_group": "tray_v1 (current oversized tray; not eligible for selection or sealed test)",
+  "review": {
+    "images": 40, "approved": 40, "unusable": 0,
+    "blocks": 93, "not_block": 35, "manual_additions": 15, "redrawn_outlines": 1,
+    "blocks_per_class": {"cylinder": 8, "cube": 17, "cuboid": 7, "tri_prism": 13, "pent_prism": 9, "hex_prism": 8,
+                         "cone": 9, "tetrahedron": 15, "sphere": 7},
+    "draft_class_correct_on_kept_draft_blocks": "18/78",
+    "most_common_draft_corrections": {"cone->tetrahedron": 12, "cylinder->cube": 7, "cylinder->tri_prism": 6,
+                                      "hex_prism->pent_prism": 6, "cone->tri_prism": 5},
+    "reviewer_notes": "11 images note partial occlusion between blocks; 4 empty trays",
+    "assistant_visual_check": "labels consistent; one item for the reviewer to confirm: the large green prism on the left of frames 25 (hex_prism) and 26 (pent_prism)"
+  },
+  "export": {
+    "suite": "dataset/suites/pilot_s01_v1 (not in Git)",
+    "manifest_sha256": "4036608bc991dd5cdf161f9ebf980e7e411a6d5c8d4c33842a883c134616a3a2",
+    "images": 40, "instances": 93, "empty_images": 4,
+    "all_polygons_passed_roundtrip": true,
+    "loaded_by_run_experiment": true
+  },
+  "baseline_before_training": {
+    "config": "vision/configs/experiments/pilot_s01_baseline_v1.json",
+    "report": "runs/experiments/pilot_s01_baseline_v1/report.md",
+    "scope": "first human-verified photos from the final fixed camera that no model has trained on; diagnostic only (tray_v1, pilot, 40 images); these photos will be used for training afterwards",
+    "joint_v5": {"strict_instance_score": 0.1610, "missed": 14, "duplicates": 2, "extra_false_positives": 25,
+                 "empty_image_alarm_rate": 0.5, "boundary_iou_unmatched_zero": 0.444,
+                 "clean_correct_per_class": {"cylinder": "8/8", "cube": "0/17", "cuboid": "1/7", "tri_prism": "0/13",
+                                             "pent_prism": "0/9", "hex_prism": "0/8", "cone": "6/9",
+                                             "tetrahedron": "1/15", "sphere": "3/7"}},
+    "first_version": {"strict_instance_score": 0.0952, "missed": 30, "duplicates": 14, "extra_false_positives": 75,
+                      "empty_image_alarm_rate": 1.0, "boundary_iou_unmatched_zero": 0.258},
+    "paired_delta_v5_minus_first": {"delta": 0.0658, "ci95": [0.0367, 0.0962], "unit": "image", "units": 40},
+    "note": "extra false positives include the remote control left in frames 13-40"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "tasks": ["D-38", "D-08", "D-36"],
+  "passed": true,
+  "scope": "End-to-end smoke run of the new workflow on the borrowed GPU machine: reviewed session export -> transfer -> GPU training through run_experiment.py -> checkpoint freeze -> evaluation -> reports back. Not a real training run: 40 tray_v1 photos, 5 epochs.",
+  "user_confirmation": "User confirmed training hours were agreed with the machine owner (the hours themselves were not recorded here)",
+  "transfer": {
+    "suite": "dataset/suites/pilot_s01_v1",
+    "manifest_sha256_local": "4036608bc991dd5cdf161f9ebf980e7e411a6d5c8d4c33842a883c134616a3a2",
+    "manifest_sha256_on_gpu_machine": "4036608bc991dd5cdf161f9ebf980e7e411a6d5c8d4c33842a883c134616a3a2",
+    "per_file_hashes_verified_by_load_suite": true,
+    "data_yaml_path_rewritten_on_machine": "data.yaml is not part of the frozen manifest; only its absolute path line changed",
+    "demo_suite_rebuilt_on_machine_manifest_sha256": "b042afa5ea2a4d708ffdb6a626aa8975edb5933ba0ec41ffa5bd647847b11c26 (identical to this PC: line-ending fix confirmed across machines)"
+  },
+  "training": {
+    "config": "vision/configs/experiments/pilot_s01_smoke_train_v1.json",
+    "device": "NVIDIA GeForce RTX 5060 Laptop GPU (CUDA:0), torch 2.15.0+cu132, Ultralytics 8.4.194",
+    "initial_model": "models/trained/stl_shape_v1/best.pt",
+    "epochs": 5, "imgsz": 640, "batch": 8,
+    "wall_seconds_total_run": 57, "training_seconds": 50,
+    "best_sha256": "2dfff0a0ba4fa34b8979f10fde27f114e0cfd50be8293f2291556a792b1e34bf",
+    "last_sha256": "7981736e45fa490c325f48eb852f49adb878d735ce63c09620d4da55cc82c6d2",
+    "ultralytics_val_on_training_images": {"mask_mAP50": 0.372, "mask_mAP50_95": 0.208},
+    "gpu_memory_after_run_mib": 1138,
+    "launch_method": "SSH from this PC kept open in the background for the whole run"
+  },
+  "evaluation": {
+    "demo_samples_synthetic_strict": 0.027,
+    "training_fit_on_own_40_images": {"strict_instance_score": 0.1095, "missed": 29, "duplicates": 7,
+                                      "extra_false_positives": 117, "empty_image_alarm_rate": 1.0,
+                                      "clean_correct_per_class": {"cylinder": "0/8", "cube": "2/17", "cuboid": "0/7",
+                                                                  "tri_prism": "8/13", "pent_prism": "0/9", "hex_prism": "0/8",
+                                                                  "cone": "0/9", "tetrahedron": "13/15", "sphere": "0/7"}},
+    "interpretation": "5 epochs on 40 images is far from converged; the numbers only show the chain works and the model starts to learn (tetrahedron 1/15 for V5 vs 13/15 here on the same, now-trained images). Training-fit numbers are not generalisation."
+  },
+  "reports": ["runs/experiments/pilot_s01_smoke_train_v1/report.md", "runs/experiments/pilot_s01_smoke_fit_v1/report.md"],
+  "not_covered": [
+    "A long run surviving an SSH disconnect (still requires keeping this PC connected, or an owner-created scheduled task)",
+    "Any model quality claim; independent selection and sealed sessions on the final tray"
+  ]
+}

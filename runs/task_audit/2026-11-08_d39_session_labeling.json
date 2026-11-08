@@ -1,0 +1,42 @@
+{
+  "task": "D-39",
+  "status_after": "部分完成",
+  "scope": "Session labeling tool built and exercised on pilot_s01 drafts; human review of pilot_s01 not done yet, so nothing has been exported or trained.",
+  "files": [
+    "vision/scripts/session_labeling.py",
+    "vision/templates/session_review.html",
+    "vision/tests/test_session_labeling.py"
+  ],
+  "design": {
+    "inputs": "dataset/raw_sessions/<session>/ plus <session>.manifest.json; every raw image is re-hashed before use",
+    "drafts": "default pipeline V5 (confidence 0.15) gives boxes and draft classes; MobileSAM outlines each box; masks cleaned (largest region, holes filled); SAM outline is the default only when it overlaps the model mask with IoU >= 0.5",
+    "review": "local page on 127.0.0.1 (foreign Host/Origin refused); each outlined instance needs a class or 'not a block'; reviewers can draw a box to add a missed block (MobileSAM outline); decisions saved per image with mask and image hashes",
+    "export": "only approved images; not-a-block and unusable images excluded; reviewed masks converted with prepare_real_training.mask_polygon round-trip check; output is the frozen-suite layout read by run_experiment.py (manifest.jsonl with session group_id, freeze.json) plus data.yaml; refuses pending images unless asked, changed raw images, changed masks and nonempty output"
+  },
+  "third_party_weights": {
+    "file": "dataset/tools/mobile_sam.pt (not in Git)",
+    "source": "https://github.com/ultralytics/assets/releases/download/v8.4.0/mobile_sam.pt",
+    "size_bytes": 40728226,
+    "sha256": "6dbb90523a35330fedd7f1d3dfc66f995213d81b29a5ca8108dbcdd4e37d6c2f",
+    "sha256_matches_github_release_digest": true
+  },
+  "tests": {"new": 8, "python_total": 128, "result": "OK",
+            "mutation_checks": {"total": 11, "detected": 11,
+                                "fixed_during_build": ["unknown image in a review request crashed the server connection; now rejected with 400 and a direct check"]}},
+  "pilot_s01_drafts": {
+    "images": 40, "draft_instances": 113, "sam_outline_default": 109, "model_outline_default": 4, "sam_failed": 0,
+    "seconds_cpu": 111,
+    "visual_check": "SAM outlines tight on coloured blocks; V5 draft classes often wrong on this camera (e.g. tetrahedron as cone, grey cube as cylinder); the remote control in frames 13-40 is drafted as a block; most white cubes and two green spheres are missed and need manual boxes",
+    "predictor_pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed"
+  },
+  "revision_outline_fix": {
+    "reported_by_user": "some outlines are wrongly marked",
+    "cause": "default rule fell back to the model outline when SAM and model disagreed (IoU < 0.5), but in those cases the model outline was the wrong one: it merged neighbours (frames 39/40 tetrahedron + cone) or dropped faces",
+    "fix": "SAM is the default when it fits its prompt box (>= 90% of the outline inside the 10%-padded box and area >= 15% of the box); otherwise the model outline. Reviewers can now redraw an outline from a tighter box (MobileSAM) or trace it by clicking corners; each becomes an extra outline option, earlier mask files are never overwritten",
+    "drafts_regenerated": {"previous_drafts_moved_to": "dataset/sessions/_superseded/pilot_s01_drafts_v1 (no reviews existed)",
+                           "images": 40, "instances": 113, "sam_default": 113, "model_default": 0},
+    "tests": {"session_labeling": 9, "python_total": 129, "result": "OK", "new_mutations_detected": "7/7"},
+    "browser_check": "review page loads, outline tools present, no console errors"
+  },
+  "not_done": ["Human review of pilot_s01", "Export and smoke training on yhj"]
+}

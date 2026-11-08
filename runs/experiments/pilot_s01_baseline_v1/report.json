@@ -1,0 +1,479 @@
+{
+  "name": "pilot_s01_baseline_v1",
+  "purpose": "最终固定相机试拍会话 pilot_s01（当前大托盘 tray_v1，40 张，人工审核 93 个物块）上评估现有两个模型，记录用于训练之前的基线。只作诊断：托盘以后会更换，这批照片之后会用于训练，不是封存测试。",
+  "generated_at": "2026-11-08T10:54:30.654121+00:00",
+  "experiment_sha256": "a20c9e4a8d89c29ec56d9697259bbec087dd1138524266c991889a17244b046e",
+  "training": null,
+  "candidates": {
+    "joint_v5": {
+      "kind": "pipeline",
+      "path": "models/trained/stl_shape_joint_v4/pipeline.json",
+      "pipeline_sha256": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed"
+    },
+    "first_version": {
+      "kind": "model",
+      "path": "models/trained/stl_shape_v1/best.pt",
+      "model_sha256": "5c7dd29d84c0b71b3110ca0da0f101210648e85b7e9badded00c2ab09f3b057e",
+      "settings": {
+        "imgsz": 320,
+        "conf": 0.25,
+        "iou": 0.7,
+        "device": "cpu",
+        "agnostic_nms": false,
+        "retina_masks": true
+      }
+    }
+  },
+  "suites": {
+    "pilot_s01": {
+      "dataset": "dataset/suites/pilot_s01_v1",
+      "manifest_sha256": "4036608bc991dd5cdf161f9ebf980e7e411a6d5c8d4c33842a883c134616a3a2",
+      "rows": 40,
+      "role": "diagnostic"
+    }
+  },
+  "summaries": {
+    "joint_v5": {
+      "pilot_s01": {
+        "images": 40,
+        "instances": 93,
+        "strict_instance_score": 0.16101694915254236,
+        "missed_instances": 14,
+        "duplicate_detections": 2,
+        "spurious_detections": 25,
+        "false_positives_per_image": 0.625,
+        "whole_scene_accuracy": 0.1,
+        "empty_images": 4,
+        "empty_images_with_detections": 2,
+        "empty_image_alarm_rate": 0.5,
+        "boundary_iou_with_unmatched_zero": 0.4443761551178775,
+        "geometry": {
+          "matched_instances": 79,
+          "truth_instances": 93,
+          "unmatched_truth": 14,
+          "matched_mean_mask_iou": 0.89457039154895,
+          "matched_mean_boundary_iou": 0.5231263598223115,
+          "boundary_iou_with_unmatched_zero": 0.4443761551178775,
+          "matched_mean_center_error_pixels": 2.4088740168163154,
+          "matched_p95_center_error_pixels": 7.355782414910815,
+          "matched_mean_center_error_normalized": 0.0030110925210203943
+        },
+        "per_class": {
+          "cylinder": {
+            "instances": 8,
+            "clean_correct": 8,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "cube": {
+            "instances": 17,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 8
+          },
+          "cuboid": {
+            "instances": 7,
+            "clean_correct": 1,
+            "clean_instance_accuracy": 0.14285714285714285,
+            "missed": 1
+          },
+          "tri_prism": {
+            "instances": 13,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "pent_prism": {
+            "instances": 9,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "hex_prism": {
+            "instances": 8,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 0
+          },
+          "cone": {
+            "instances": 9,
+            "clean_correct": 6,
+            "clean_instance_accuracy": 0.6666666666666666,
+            "missed": 1
+          },
+          "tetrahedron": {
+            "instances": 15,
+            "clean_correct": 1,
+            "clean_instance_accuracy": 0.06666666666666667,
+            "missed": 0
+          },
+          "sphere": {
+            "instances": 7,
+            "clean_correct": 3,
+            "clean_instance_accuracy": 0.42857142857142855,
+            "missed": 4
+          }
+        },
+        "confusion_rows_true_cols_pred": [
+          [
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            7,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            2,
+            0
+          ],
+          [
+            2,
+            0,
+            1,
+            0,
+            0,
+            6,
+            0,
+            0,
+            0
+          ],
+          [
+            6,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            6,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            12,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3
+          ]
+        ],
+        "scores_by_threshold": {
+          "0.5": {
+            "strict_instance_score": 0.16101694915254236,
+            "missed_instances": 14,
+            "duplicate_detections": 2,
+            "spurious_detections": 25
+          },
+          "0.75": {
+            "strict_instance_score": 0.15079365079365079,
+            "missed_instances": 20,
+            "duplicate_detections": 0,
+            "spurious_detections": 33
+          }
+        },
+        "median_inference_seconds": 0.8445737000010922,
+        "groups": {
+          "session_group": {
+            "tray_v1": {
+              "images": 40,
+              "instances": 93,
+              "strict_instance_score": 0.16101694915254236,
+              "missed_instances": 14,
+              "spurious_detections": 25,
+              "empty_image_alarm_rate": 0.5
+            }
+          }
+        }
+      }
+    },
+    "first_version": {
+      "pilot_s01": {
+        "images": 40,
+        "instances": 93,
+        "strict_instance_score": 0.09523809523809523,
+        "missed_instances": 30,
+        "duplicate_detections": 14,
+        "spurious_detections": 75,
+        "false_positives_per_image": 1.875,
+        "whole_scene_accuracy": 0.05,
+        "empty_images": 4,
+        "empty_images_with_detections": 4,
+        "empty_image_alarm_rate": 1.0,
+        "boundary_iou_with_unmatched_zero": 0.25811842033866833,
+        "geometry": {
+          "matched_instances": 63,
+          "truth_instances": 93,
+          "unmatched_truth": 30,
+          "matched_mean_mask_iou": 0.8794583060285954,
+          "matched_mean_boundary_iou": 0.3810319538332724,
+          "boundary_iou_with_unmatched_zero": 0.25811842033866833,
+          "matched_mean_center_error_pixels": 3.568979675423979,
+          "matched_p95_center_error_pixels": 10.668918736190909,
+          "matched_mean_center_error_normalized": 0.004461224594279975
+        },
+        "per_class": {
+          "cylinder": {
+            "instances": 8,
+            "clean_correct": 8,
+            "clean_instance_accuracy": 1.0,
+            "missed": 0
+          },
+          "cube": {
+            "instances": 17,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 12
+          },
+          "cuboid": {
+            "instances": 7,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 3
+          },
+          "tri_prism": {
+            "instances": 13,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 1
+          },
+          "pent_prism": {
+            "instances": 9,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 1
+          },
+          "hex_prism": {
+            "instances": 8,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 2
+          },
+          "cone": {
+            "instances": 9,
+            "clean_correct": 6,
+            "clean_instance_accuracy": 0.6666666666666666,
+            "missed": 2
+          },
+          "tetrahedron": {
+            "instances": 15,
+            "clean_correct": 0,
+            "clean_instance_accuracy": 0.0,
+            "missed": 4
+          },
+          "sphere": {
+            "instances": 7,
+            "clean_correct": 2,
+            "clean_instance_accuracy": 0.2857142857142857,
+            "missed": 5
+          }
+        },
+        "confusion_rows_true_cols_pred": [
+          [
+            8,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            3,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            0,
+            0,
+            6,
+            0,
+            0,
+            0
+          ],
+          [
+            5,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            7,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            11,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2
+          ]
+        ],
+        "scores_by_threshold": {
+          "0.5": {
+            "strict_instance_score": 0.09523809523809523,
+            "missed_instances": 30,
+            "duplicate_detections": 14,
+            "spurious_detections": 75
+          },
+          "0.75": {
+            "strict_instance_score": 0.09090909090909091,
+            "missed_instances": 34,
+            "duplicate_detections": 10,
+            "spurious_detections": 83
+          }
+        },
+        "median_inference_seconds": 0.05449225000029401,
+        "groups": {
+          "session_group": {
+            "tray_v1": {
+              "images": 40,
+              "instances": 93,
+              "strict_instance_score": 0.09523809523809523,
+              "missed_instances": 30,
+              "spurious_detections": 75,
+              "empty_image_alarm_rate": 1.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "candidate": "joint_v5",
+      "baseline": "first_version",
+      "suite": "pilot_s01",
+      "unit": "image",
+      "units": 40,
+      "resamples": 2000,
+      "alpha": 0.05,
+      "delta": 0.06577885391444713,
+      "ci_low": 0.03666315201681777,
+      "ci_high": 0.0962374405989092
+    }
+  ],
+  "selection": null,
+  "gates": [],
+  "gates_status": "none",
+  "all_gates_passed": null,
+  "sealed_suites": [],
+  "models_deployed": false
+}

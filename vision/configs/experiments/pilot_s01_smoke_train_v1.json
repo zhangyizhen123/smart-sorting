@@ -1,0 +1,22 @@
+{
+  "name": "pilot_s01_smoke_train_v1",
+  "purpose": "冒烟训练：在借用的 GPU 训练机上用 pilot_s01（40 张，tray_v1）跑 5 轮，验证导出数据、GPU 训练、检查点冻结和评估整条链路。不是正式训练，结果不代表模型效果；评估集用 12 张演示样例，只为确认评估环节能跑通。",
+  "output": "runs/experiments/pilot_s01_smoke_train_v1",
+  "seed": 42,
+  "threads": 4,
+  "thresholds": [0.5],
+  "suites": {
+    "demo_samples": {"dataset": "dataset/stl_demo_samples_suite_v2", "role": "diagnostic"}
+  },
+  "train": {
+    "data": "dataset/suites/pilot_s01_v1/data.yaml",
+    "manifest": "dataset/suites/pilot_s01_v1/manifest.jsonl",
+    "initial_model": "models/trained/stl_shape_v1/best.pt",
+    "epochs": 5, "patience": 5, "imgsz": 640, "batch": 8, "device": "0",
+    "threads": 4, "workers": 0, "cache": "none", "lr0": 0.001, "warmup_epochs": 1.0
+  },
+  "candidates": {
+    "smoke_best": {"trained": "best",
+                   "settings": {"imgsz": 640, "conf": 0.25, "iou": 0.7, "device": 0, "retina_masks": true}}
+  }
+}

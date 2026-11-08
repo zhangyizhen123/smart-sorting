@@ -1,0 +1,15 @@
+{
+  "name": "pilot_s01_smoke_fit_v1",
+  "purpose": "训练拟合检查：冒烟训练得到的检查点在它自己的 40 张训练图上的结果，只用来确认模型确实从标注中学到了东西；不代表新照片上的效果，不能与 pilot_s01_baseline_v1 当作独立比较。",
+  "output": "runs/experiments/pilot_s01_smoke_fit_v1",
+  "seed": 42,
+  "threads": 4,
+  "thresholds": [0.5],
+  "suites": {
+    "pilot_s01_training_images": {"dataset": "dataset/suites/pilot_s01_v1", "role": "diagnostic"}
+  },
+  "candidates": {
+    "smoke_best": {"model": "runs/experiments/pilot_s01_smoke_train_v1/train/weights/best.pt",
+                   "settings": {"imgsz": 640, "conf": 0.25, "iou": 0.7, "device": 0, "retina_masks": true}}
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "pilot_s01_smoke_fit_v1",
+  "config": {
+    "name": "pilot_s01_smoke_fit_v1",
+    "purpose": "训练拟合检查：冒烟训练得到的检查点在它自己的 40 张训练图上的结果，只用来确认模型确实从标注中学到了东西；不代表新照片上的效果，不能与 pilot_s01_baseline_v1 当作独立比较。",
+    "output": "runs/experiments/pilot_s01_smoke_fit_v1",
+    "seed": 42,
+    "threads": 4,
+    "thresholds": [
+      0.5
+    ],
+    "suites": {
+      "pilot_s01_training_images": {
+        "dataset": "dataset/suites/pilot_s01_v1",
+        "role": "diagnostic"
+      }
+    },
+    "candidates": {
+      "smoke_best": {
+        "model": "runs/experiments/pilot_s01_smoke_train_v1/train/weights/best.pt",
+        "settings": {
+          "imgsz": 640,
+          "conf": 0.25,
+          "iou": 0.7,
+          "device": 0,
+          "retina_masks": true
+        }
+      }
+    }
+  },
+  "config_sha256": "ca40a5d6a04b826627ba7727e19c475261e05c0dbc67d480ce6f6a49b1e448c3",
+  "code_sha256": {
+    "run_experiment.py": "291e1c85eb543e4ef2a7c1fa144ff7bded805173c1577b3519b03b904c525ccc",
+    "evaluate_focused.py": "37bbb88d09d1dcdaf89059427ca71a10e0f92476f9ad6eeb3d000e75278dc94b",
+    "contour_quality.py": "3fe6988deb0f9fcbe079b4e64846441941315d7afe909d6e233fa77de1789834",
+    "run_contour_audit.py": "d7aa94ee2fd4da6c914e617ba2b52ee735870f4a68de6fabc20c1ef90f213407",
+    "shape_refiner.py": "b5541a54c25e4da81183c97e7038db60f22efefef95c8fe1f3cb00bfea944f06"
+  },
+  "suites": {
+    "pilot_s01_training_images": {
+      "dataset": "dataset/suites/pilot_s01_v1",
+      "manifest_sha256": "4036608bc991dd5cdf161f9ebf980e7e411a6d5c8d4c33842a883c134616a3a2",
+      "rows": 40,
+      "role": "diagnostic"
+    }
+  },
+  "train_manifest_sha256": null,
+  "leakage_check": null,
+  "created_at": "2026-11-08T11:04:45.750530+00:00"
+}

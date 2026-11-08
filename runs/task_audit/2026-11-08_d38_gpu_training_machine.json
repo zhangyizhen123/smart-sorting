@@ -1,0 +1,46 @@
+{
+  "task": "D-38",
+  "status_after": "部分完成",
+  "passed": true,
+  "scope": "Remote GPU training machine reached over Tailscale with key-based SSH as a dedicated standard account; environment and inference checks only. No training was run: training hours and an unattended run method are not agreed yet.",
+  "commit_on_machine": "e8d7cfb",
+  "access": {
+    "method": "OpenSSH key authentication over Tailscale; host key fingerprint matched the owner's record before first login",
+    "account": "dedicated non-administrator account",
+    "workspace": "D:\\sorting (ACL: the account, SYSTEM, Administrators only)",
+    "observed_limit": "processes started over SSH are terminated when the session closes; WMI is denied for this account; PowerShell script files are blocked by execution policy (not changed)"
+  },
+  "machine": {
+    "os": "Windows 11 (10.0.26200)",
+    "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU, 7.93 GiB, compute capability 12.0, 80 W cap",
+    "driver": "617.14 (CUDA UMD 13.4)",
+    "free_space_note": "about 58 GB free on D: at setup"
+  },
+  "environment": {
+    "python": "3.13.16 (system install)",
+    "git": "MinGit 2.56.0.4, SHA-256 checked against the official release notes",
+    "requirements": "vision/requirements-gpu-cu132.txt",
+    "torch": "2.15.0+cu132 (arch list includes sm_120), cuDNN 92600",
+    "torchvision": "0.29.1+cu132 (no CUDA build of 0.29.2; metadata requires torch>=2.14.0)",
+    "packages_installed": 47,
+    "pip_check": "No broken requirements found.",
+    "caches": "pip cache, temp files and Ultralytics settings directed to D:\\sorting via D:\\sorting\\env.cmd"
+  },
+  "checks": {
+    "model_hashes": {"stl_shape_joint_v4/pipeline.json": "e741dd38fa1ce22ec04b4fbc5d34b9a53dd8d6be0950d44936db7d1e02fd84ed",
+                     "stl_shape_v1/best.pt matches docs/stl_shape_v1_demo/predictions.json": true},
+    "gpu_matmul_2048_fp32_ms": 1.584,
+    "gpu_matmul_max_relative_error_vs_fp64_cpu": 1.93e-06,
+    "demo_inference_vs_archive": {
+      "cpu": {"cases_equal": "12/12", "max_confidence_diff": 6.1e-07, "median_seconds": 0.0379},
+      "cuda": {"cases_equal": "12/12", "max_confidence_diff": 4.25e-04, "median_seconds": 0.0256}
+    },
+    "unit_tests": {"tests_run": 120, "result": "OK", "seconds": 6.588}
+  },
+  "not_done": [
+    "Agree training hours with the machine owner",
+    "Choose and test an unattended run method (keep this PC connected, or an owner-created scheduled task)",
+    "Transfer dataset/ (not in Git) and verify hashes on the machine",
+    "Any training run, including a GPU smoke run"
+  ]
+}
